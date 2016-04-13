@@ -29,8 +29,12 @@ class Resource(base.Resource):
     def __repr__(self):
         if getattr(self, 'name', None):
             return "<Resource: %s>" % self.name
-        else:
+        elif getattr(self, 'id', None):
             return "<Resource: %s>" % self.id
+        elif getattr(self, 'zoneName', None):
+            return "<Resource: %s>" % self.zoneName
+        else:
+            return "<Resource>"
 
 class ResourceType(base.Resource):
     def __repr__(self):

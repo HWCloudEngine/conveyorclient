@@ -369,7 +369,10 @@ def _print_plan(plan):
            'expire_time': plan.expire_at,
            'project_id': plan.project_id,
            'user_id': plan.user_id,
-           'resources': plan.updated_resources or plan.original_resources
+           'original_resources': plan.original_resources,
+           'updated_resources': plan.updated_resources,
+           'original_dependencies': plan.original_dependencies,
+           'updated_dependencies': plan.updated_dependencies
            }
     utils.print_json(res)
 
