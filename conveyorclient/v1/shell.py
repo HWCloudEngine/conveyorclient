@@ -114,6 +114,25 @@ def do_export_clone_template(cs, args):
 def do_clone(cs, args):
     """clone resources """
     cs.clones.clone(args.plan, args.destination, args.update_resources)
+    
+    
+@utils.arg('plan',
+    metavar='<plan>',
+    help=_('Name or ID of plan.'))
+def do_export_migrate_template(cs, args):
+    """export a migrate template. """
+    cs.migrates.export_migrate_template(args.plan)
+
+@utils.arg('plan',
+    metavar='<plan>',
+    help=_('Name or ID of plan.'))
+@utils.arg('destination',
+     metavar="<destination>",
+     help="The destination of clone plan")
+def do_migrate(cs, args):
+    """migrate resources """
+    cs.migrates.migrate(args.plan, args.destination)
+    
 
 def do_endpoints(cs, args):
     """Discovers endpoints registered by authentication service."""

@@ -26,12 +26,12 @@ from conveyorclient import base
 
 
 class ClonesService(base.Resource):
-    """A resource is an migrate/clone plan for openstack resources."""
+    """A resource is an clone plan for openstack resources."""
     def __repr__(self):
         return "<plan: %s>" % self.id
 
     def export_clone_template(self, update_resources):
-        """export template for this resource."""
+        """export clone template for this resource."""
         self.manager.export_clone_template(self, update_resources)
         
     def clone(self, destination, update_resources):

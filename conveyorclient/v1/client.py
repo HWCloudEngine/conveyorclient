@@ -17,6 +17,7 @@ from conveyorclient import client
 from conveyorclient.v1 import clones
 from conveyorclient.v1 import resources
 from conveyorclient.v1 import plans
+from conveyorclient.v1 import migrates
 
 DEFAULT_CONVEYOR_SERVICE_TYPE = 'conveyor'
 
@@ -51,6 +52,7 @@ class Client(object):
         self.clones = clones.ClonesServiceManager(self)
         self.resources = resources.ResourceManager(self)
         self.plans = plans.PlanManager(self)
+        self.migrates = migrates.MigratesServiceManager(self)
 
         # Add in any extensions...
         if extensions:

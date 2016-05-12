@@ -88,4 +88,21 @@ class PlanManager(base.ManagerWithFind):
         resp, body = self.api.client.post("/plans/create_plan_by_template", body=body)
         return body['plan']
 
+    def download_template(self, plan):
+        """
+        Create a clone or migrate plan by template.
+        :param plan:The ID of the plan.
+        :rtype: :dict
+        """
+        return self._action('download_template',
+                            plan)
 
+    def _action(self, action, plan, info=None, **kwargs):
+        """
+        Perform a plan "action" -- download_templdate etc.
+        """
+        body = {action: info}
+        self.run_hooks('modify_body_for_action', body, **kwargs)
+        url = '/plans/%s/action' % base.getid(plan)
+        return self.api.client.post(url, body=body)
+    
