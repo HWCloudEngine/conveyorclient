@@ -84,7 +84,7 @@ class PlanManager(base.ManagerWithFind):
         Create a clone or migrate plan by template.
         :rtype: :class:`Plan`
         """
-        body = {"template": template}
+        body = {"plan": {"template": template}}
         resp, body = self.api.client.post("/plans/create_plan_by_template", body=body)
         return body['plan']
 

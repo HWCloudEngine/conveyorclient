@@ -183,22 +183,43 @@ def do_resource_list(cs, args):
     _print_resources(resources, args.type)
 
 
+@utils.arg('type',
+     metavar="<type>",
+     help="The type of resource.")
 @utils.arg('id',
      metavar="<id>",
-     help="The identifier of resource, eg: server_0, volume_4")
-@utils.arg('--plan-id',
+     help="The id of resource.")
+@utils.service_type(DEFAULT_V2V_SERVICE_TYPE)
+def do_resource_show(cs, args):
+    """Get resource details of specified type."""
+    resource = cs.resources.get_resource_detail(args.type, args.id)
+    #print(resource)
+    utils.print_json(resource)
+
+
+@utils.arg('plan_id',
      metavar="<plan-id>",
      help="The uuid of plan")
-@utils.arg(
-    '--plan_id',
-    help=argparse.SUPPRESS)
+@utils.arg('resource_id',
+     metavar="<resource-id>",
+     help="The identifier of resource, eg: server_0, volume_4")
+@utils.arg('--original',
+    dest='original',
+    metavar='<0|1>',
+    default=True,
+    nargs='?',
+    type=int,
+    const=1,
+    help=_('Get resource details from original resources ' 
+           'or updated resources.'))
 @utils.service_type(DEFAULT_V2V_SERVICE_TYPE)
 def do_plan_resource_show(cs, args):
     """Get the details of specified resource in a plan."""
-    id = args.id
+    resource_id = args.resource_id
     plan_id = args.plan_id
     utils.isUUID(plan_id, "plan")
-    resource = cs.resources.get_resource_detail_from_plan(id, plan_id)
+    resource = cs.resources.get_resource_detail_from_plan(resource_id, plan_id, 
+                                                          args.original)
     #print result
     attr = resource.get("properties", {})
     attr["id"] = resource.get("id", "")
@@ -211,18 +232,6 @@ def do_plan_resource_show(cs, args):
     utils.print_dict(attr)
 
 
-@utils.arg('id',
-     metavar="<id>",
-     help="The id of resource.")
-@utils.arg('--type',
-     metavar="<type>",
-     help="The type of resource.")
-@utils.service_type(DEFAULT_V2V_SERVICE_TYPE)
-def do_resource_show(cs, args):
-    """Get resource details of specified type."""
-    resource = cs.resources.get_resource_detail(args.type, args.id)
-    #print(resource)
-    utils.print_json(resource)
 
 
 @utils.arg(
@@ -233,7 +242,7 @@ def do_resource_show(cs, args):
     type=int,
     const=1,
     default=0,
-    help='Shows details for all tenants. Admin only.')
+    help='Show details for all tenants. Admin only.')
 @utils.arg(
     '--all_tenants',
     nargs='?',
@@ -247,7 +256,8 @@ def do_plan_list(cs, args):
     #TODO  search_opts, eg: all_tenants
     search_opts = {}
     plans = cs.plans.list(search_opts=search_opts)
-    key_list = ['plan_id', 'plan_type', 'plan_status', 'task_status', 'created_at']
+    key_list = ['plan_id', 'plan_type', 'plan_status', 
+                'task_status', 'created_at', 'expire_at']
     if all_tenants:
         key_list.append('project_id')
     utils.print_list(plans, key_list)
@@ -262,7 +272,8 @@ def do_plan_show(cs, args):
     utils.isUUID(args.plan, "plan")
     plan = cs.plans.get(args.plan)
     _print_plan(plan)
-    
+
+
 @utils.arg('plan',
      metavar="<plan>",
      nargs='+',
@@ -287,10 +298,10 @@ def do_plan_delete(cs, args):
      action='append',
      dest='resources',
      default=[],
-     help="Add a resource to clone or migrate."
-     "Specify option multiple times to clone or migrate multiple resources."
-     "type: the type of resource, you can get the types by the command: conveyor resource-type-list"
-     "id: the id of resource."
+     help="Add a resource to clone or migrate. "
+     "Specify option multiple times to clone or migrate multiple resources. "
+     "<type>: the type of resource, you can get the types by the command: conveyor resource-type-list. "
+     "<id>: the id of resource. "
      "Both type and id must be provided")
 @utils.arg('--type',
      metavar="<type>",
@@ -300,12 +311,9 @@ def do_plan_delete(cs, args):
 @utils.service_type(DEFAULT_V2V_SERVICE_TYPE)
 def do_plan_create(cs, args):
     """Create a plan."""
-    
     if args.type and args.resources:
-    
         res_types = cs.resources.resource_type_list()
         res_type_list = [t.type for t in res_types]
-        
         resources = _extract_resource_argument(args.resources, res_type_list)
         
         if args.type not in ["clone", "migrate"]:
@@ -313,9 +321,10 @@ def do_plan_create(cs, args):
             raise exceptions.CommandError(err_msg)
         
         plan = cs.plans.create(args.type, resources)
-        print("plan_id:", plan.plan_id)
-        #print(plan.resource_dependencies)
+        
+        print("plan_id: %s" % plan.plan_id)
         utils.print_json(plan.original_dependencies)
+        
     elif args.template_file:
         tpl_files, template = template_utils.get_template_contents(
                                                         args.template_file)
@@ -326,7 +335,7 @@ def do_plan_create(cs, args):
         err_msg = "template file or (type, resources) argument is required! "
         raise exceptions.CommandError(err_msg)
 
-	
+
 @utils.arg('--plan-id',
      metavar="<plan-id>",
      help="The uuid of plan")
@@ -351,7 +360,7 @@ def _extract_resource_argument(arg_res, res_type_list):
     for res in arg_res:
         err_msg = ("Invalid resource argument '%s'. "
                      "Resource arguments must contain both type and id! "
-                     "Eg: --resource type=OS::Nova::Server,id=xxxxx ") % res
+                     "Eg: --resource type=OS::Nova::Server,id=xxxxx.") % res
         
         res_opts = {'type': '', 'id':''}
         
@@ -378,7 +387,7 @@ def _extract_resource_argument(arg_res, res_type_list):
     return resources
 
 def _print_plan(plan):
-    print(plan.plan_id,": ")
+    print("%s:" % plan.plan_id)
     res = {'plan_id': plan.plan_id,
            'plan_type': plan.plan_type,
            'plan_status':plan.plan_status,
@@ -388,10 +397,11 @@ def _print_plan(plan):
            'expire_time': plan.expire_at,
            'project_id': plan.project_id,
            'user_id': plan.user_id,
+           'stack_id': plan.stack_id,
            'original_resources': plan.original_resources,
            'updated_resources': plan.updated_resources,
-           'original_dependencies': plan.original_dependencies,
-           'updated_dependencies': plan.updated_dependencies
+           #'original_dependencies': plan.original_dependencies,
+           #'updated_dependencies': plan.updated_dependencies
            }
     utils.print_json(res)
 

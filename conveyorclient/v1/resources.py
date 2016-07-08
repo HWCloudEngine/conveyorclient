@@ -59,14 +59,15 @@ class ResourceManager(base.ManagerWithFind):
         return body['resource']
 
 
-    def get_resource_detail_from_plan(self, res_id, plan_id):
+    def get_resource_detail_from_plan(self, res_id, plan_id, is_original=True):
         """
         Get the details of specified resource in a plan.
         :param id: The identifier of the resource to get.
         :param plan_id: The ID of the plan.
         :rtype: :class:`Resource`
         """
-        body = {"get_resource_detail_from_plan": {"plan_id": plan_id}}
+        body = {"get_resource_detail_from_plan": 
+                    {"plan_id": plan_id, "is_original": is_original}}
         resp, body = self.api.client.post("/resources/%s/action" % res_id, body=body)
         return body['resource']
 
