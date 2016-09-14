@@ -23,6 +23,8 @@ import copy
 import os
 import sys
 import time
+import six
+import re
 
 from conveyorclient import exceptions
 from conveyorclient import utils
@@ -91,14 +93,13 @@ def _extract_metadata(args):
 @utils.arg('plan',
     metavar='<plan>',
     help=_('Name or ID of plan.'))
-@utils.arg('--update_resources',
-     metavar="type=resource_type,res_id=resource_id[,key2=value2...]",
-     action='append',
-     default=[], 
-     help=_('List of update resources.'))
+@utils.arg('--sys_clone',  
+           metavar='<sys_clone>',
+           default=False,
+           help='Clone the system volume as well or not.')
 def do_export_clone_template(cs, args):
     """export a clone template. """
-    cs.clones.export_clone_template(args.plan, args.update_resources)
+    cs.clones.export_clone_template(args.plan, args.sys_clone)
 
 @utils.arg('plan',
     metavar='<plan>',
@@ -106,16 +107,14 @@ def do_export_clone_template(cs, args):
 @utils.arg('destination',
      metavar="<destination>",
      help="The destination of clone plan")
-@utils.arg('--update_resources',
-     metavar="type=resource_type,res_id=resource_id[,key2=value2...]",
-     action='append',
-     default=[], 
-     help=_('List of update resources.'))
+@utils.arg('--sys_clone',  
+           metavar='<sys_clone>',
+           default=False,
+           help='Clone the system volume as well or not.')
 def do_clone(cs, args):
     """clone resources """
-    cs.clones.clone(args.plan, args.destination, args.update_resources)
-    
-    
+    cs.clones.clone(args.plan, args.destination, args.sys_clone)
+
 @utils.arg('plan',
     metavar='<plan>',
     help=_('Name or ID of plan.'))
@@ -232,6 +231,34 @@ def do_plan_resource_show(cs, args):
     utils.print_dict(attr)
 
 
+@utils.arg('plan_id',
+     metavar="<plan-id>",
+     help="The uuid of plan")
+@utils.arg('--resource',
+     metavar="action=action-type,key1=value1[,key2=value2...]",
+     action='append',
+     dest='resource',
+     default=[],
+     help=_("Specify option multiple times to update multiple resources. "
+     "The keys can be chose from (resource_id, id and the fields of specific resource)."
+     "'resource_id' is the identifier of resource in plan, such as OS::Nova::Server. "
+     "'id' is the actual id, it's uuid of most resources, "
+     "or name of special resources, such as keypair. "
+     "action: resource operation type (add, edit or delete)."
+     "If action is add, id and resource_type of new resource must be provided. "
+     "If action is edit, resource_id and the fields to be edited must be provided. "
+     "If action is delete, resource_id must be provided."
+     "Notice that if you want update some non-independent resources, "
+     "you'd better update all corresponding resources in order of the "
+     "dependencies at the same time. "
+     "For example, you can update port resource by providing "
+     "(network, subnet, port) resources in order."))
+@utils.service_type(DEFAULT_V2V_SERVICE_TYPE)
+def do_plan_resource_update(cs, args):
+    """Update resources of specific plan."""
+    utils.isUUID(args.plan_id, "plan")
+    res = _extract_plan_resource_update_args(args.resource)
+    cs.plans.update_plan_resource(args.plan_id, res)
 
 
 @utils.arg(
@@ -353,6 +380,75 @@ def do_template_clone(cs, args):
     plan_id = args.plan_id
     cs.clones.start_clone_template(plan_id, disable_rollback, template)
 
+@utils.arg(
+    '-p', '--properties',
+    metavar='<key=value>',
+    action='append',
+    help='Key/value pair describing the configurations of the '
+         'conveyor service.')
+def do_update_configs(cs, args):
+    
+    fields_list = ['properties']
+    fields = dict((k, v) for (k, v) in vars(args).items()
+                  if k in fields_list and not (v is None))
+    
+    fields = utils.args_array_to_dict(fields, 'properties')
+    fields = fields.get('properties', {})
+    input_dict = {}
+    
+    try:
+        for k, v in fields.items():
+            input_dict[k] =  _translate_string_dict(v)
+    except ValueError:
+        msg = "Input configure key value must be like 'v' or 'k:v' or 'v1,v2'"
+        raise exceptions.CommandError(msg)
+    
+    if input_dict:
+        param = {}
+        param['config_file'] = input_dict.pop('config-file', None)
+        param['config_info'] = input_dict
+        cs.configs.update_configs(**param)
+    else:
+        msg = "Update configuration info properties is empty"
+        raise exceptions.CommandError(msg)
+
+def _extract_plan_resource_update_args(res_args):
+    res = []
+    
+    if len(res_args) < 1:
+        raise exceptions.CommandError("'resource' argument must be provided.")
+    
+    for items in res_args:
+        
+        def _replace(m):
+            s = m.group(0)
+            if s[0] in "\"'":
+                return s
+            if m.group(1):
+                #return '"%s"' % s.replace('-', '_')
+                return '"%s"' % s if s != ':' else s
+            return s.replace('=', ':')
+        
+        new_items = re.sub(r""""[^"]*"|'[^']*'|([:A-Za-z0-9./_-]+)|.""", _replace, items)
+
+        try:
+            attrs = eval("{ %s }"  % new_items)
+        except Exception as e:
+            msg = "Invalid resource: %s. %s" % (items, unicode(e))
+            raise exceptions.CommandError(msg)
+    
+        special_fields = ('user_data', 'public_key')
+        for sf in special_fields:
+            special_value = attrs.get(sf)
+            if special_value and isinstance(special_value, six.string_types):
+                if special_value.startswith('/'):
+                    with open(special_value, 'r') as f:
+                        attrs[sf] = f.read()
+        
+        res.append(attrs)
+        
+    return res
+
 
 def _extract_resource_argument(arg_res, res_type_list):
     resources = []
@@ -464,7 +560,23 @@ def _translate_extended_states(collection):
         except AttributeError:
             setattr(item, 'task_state', "N/A")
 
+def _translate_string_dict(string):
+    
+    # if dict
+    if (':' in string):
+        if '{' == string[0] and '}' == string[-1]:
+            result = eval(string)
+        else:
+            str_dict = '{' + string + '}'
+            result = eval(str_dict)
+    # if list
+    elif ',' in string:
+        result = []
+        split_list = string.split(',')
+        for l in split_list:
+            result.append(l)
+    # if string
+    else:
+        result = string
 
-
-
-
+    return result

@@ -33,45 +33,42 @@ class MigratesService(base.Resource):
     def export_migrate_template(self):
         """export migrate template for this plan."""
         self.manager.export_migrate_template(self)
-        
+
     def migrate(self, destination):
         """migrate plan."""
         self.manager.migrate(self, destination)
-        
+
 
 class MigratesServiceManager(base.ManagerWithFind):
     """
     Manage :class:`Clones` resources.
     """
     resource_class = MigratesService
-   
-        
+
     def list(self):
         pass
-    
+
     def export_migrate_template(self, plan):
         """
         export the template of migrate plan
-        
+
         :param plan: The :class:`Plan` to update.
         """
         return self._action('export_migrate_template',
                             plan)
-        
+
     def migrate(self, plan, destination):
         return self._action('migrate',
                             plan,
                             {
-                              'destination':destination
+                                'destination': destination
                             })
 
     def _action(self, action, plan, info=None, **kwargs):
         """
-        Perform a plan "action" -- export_migrate_template/import_migrate_templateetc.
+        Perform a plan "action" -- export_migrate_template/migrate etc.
         """
         body = {action: info}
         self.run_hooks('modify_body_for_action', body, **kwargs)
         url = '/migrates/%s/action' % base.getid(plan)
         return self.api.client.post(url, body=body)
-    
-    

@@ -30,56 +30,60 @@ class ClonesService(base.Resource):
     def __repr__(self):
         return "<plan: %s>" % self.id
 
-    def export_clone_template(self, update_resources):
+    def export_clone_template(self, sys_clone=False):
         """export clone template for this resource."""
-        self.manager.export_clone_template(self, update_resources)
+        self.manager.export_clone_template(self, sys_clone)
         
-    def clone(self, destination, update_resources):
+    def clone(self, destination, sys_clone):
         """clone plan."""
-        self.manager.clone(self, destination, update_resources)
+        self.manager.clone(self, destination, sys_clone=False)
+        
 
 class ClonesServiceManager(base.ManagerWithFind):
     """
     Manage :class:`Clones` resources.
     """
     resource_class = ClonesService
-   
-        
+
+
     def list(self):
         pass
-    def export_clone_template(self, plan, update_resources):
+
+    def export_clone_template(self, plan, sys_clone=False):
         """
         export the template of clone plan
-        
+
         :param plan: The :class:`Plan` to update.
         """
         return self._action('export_clone_template',
                             plan,
-                            {'update_resources': update_resources
+                            {
+                             'sys_clone':  sys_clone
                             })
-        
-    def clone(self, plan, destination, update_resources):
+
+    def clone(self, plan, destination, sys_clone=False):
         return self._action('clone',
                             plan,
                             {
-                              'destination':destination,
-                             'update_resources': update_resources
+                                'destination': destination,
+                                'sys_clone':  sys_clone
                             })
 
     def _action(self, action, plan, info=None, **kwargs):
         """
-        Perform a plan "action" -- export_clone_template/import_clone_templateetc.
+        Perform a plan "action" export_clone_template/clone etc.
         """
         body = {action: info}
         self.run_hooks('modify_body_for_action', body, **kwargs)
         url = '/clones/%s/action' % base.getid(plan)
         return self.api.client.post(url, body=body)
-    
-    def start_clone_template(self, plan_id, disable_rollback, template, **kwargs):
-        
-        body = {"clone_element_template":{"disable_rollback": disable_rollback,
-                                          "plan_id": plan_id,
-                                          "template":template
+
+    def start_clone_template(self, plan_id, disable_rollback,
+                             template, **kwargs):
+        body = {"clone_element_template": {
+                                            "disable_rollback": disable_rollback,
+                                            "plan_id": plan_id,
+                                            "template": template
                                           }
                 }
         

@@ -15,6 +15,7 @@
 
 from conveyorclient import client
 from conveyorclient.v1 import clones
+from conveyorclient.v1 import configuration
 from conveyorclient.v1 import resources
 from conveyorclient.v1 import plans
 from conveyorclient.v1 import migrates
@@ -53,6 +54,7 @@ class Client(object):
         self.resources = resources.ResourceManager(self)
         self.plans = plans.PlanManager(self)
         self.migrates = migrates.MigratesServiceManager(self)
+        self.configs = configuration.ConfigurationServiceManager(self)
 
         # Add in any extensions...
         if extensions:
