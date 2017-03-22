@@ -148,7 +148,6 @@ def do_resource_type_list(cs, args):
     #print(types)
     utils.print_list(types, ["type"])
 
-
 @utils.arg(
     '--all-tenants',
     dest='all_tenants',
@@ -299,8 +298,7 @@ def do_plan_show(cs, args):
     utils.isUUID(args.plan, "plan")
     plan = cs.plans.get(args.plan)
     _print_plan(plan)
-
-
+    
 @utils.arg('plan',
      metavar="<plan>",
      nargs='+',
@@ -351,7 +349,6 @@ def do_plan_create(cs, args):
         
         print("plan_id: %s" % plan.plan_id)
         utils.print_json(plan.original_dependencies)
-        
     elif args.template_file:
         tpl_files, template = template_utils.get_template_contents(
                                                         args.template_file)
@@ -361,6 +358,32 @@ def do_plan_create(cs, args):
     else:
         err_msg = "template file or (type, resources) argument is required! "
         raise exceptions.CommandError(err_msg)
+
+
+@utils.arg('plan', metavar='<plan>', nargs='+',
+           help='ID of plan to modify.')
+@utils.arg('--state', metavar='<state>', default='available',
+           help=('The state to assign to the volume. Valid values are '
+                 '"creating", "available", "cloning", "migrating",' 
+               '"finished", "deleting", "error_deleting", "expired" and '
+                 '"error." '
+                 'Default=available.'))
+@utils.service_type(DEFAULT_V2V_SERVICE_TYPE)
+def do_reset_plan_state(cs, args):
+    """Explicitly updates the plan state."""
+    failure_flag = False
+
+    for plan in args.plan:
+        try:
+            utils.find_plan(cs, plan).reset_plan_state(args.state)
+        except Exception as e:
+            failure_flag = True
+            msg = "Reset state for plan %s failed: %s" % (plan, e)
+            print(msg)
+
+    if failure_flag:
+        msg = "Unable to reset the state for the specified plan(s)."
+        raise exceptions.CommandError(msg)
 
 
 @utils.arg('--plan-id',
@@ -386,6 +409,7 @@ def do_template_clone(cs, args):
     action='append',
     help='Key/value pair describing the configurations of the '
          'conveyor service.')
+@utils.service_type('conveyorConfig')
 def do_update_configs(cs, args):
     
     fields_list = ['properties']

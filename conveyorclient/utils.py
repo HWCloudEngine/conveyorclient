@@ -26,7 +26,7 @@ import six
 import prettytable
 
 from conveyorclient import exceptions
-from conveyorclient.common import strutils
+from oslo_utils import encodeutils
 
 
 def arg(*args, **kwargs):
@@ -165,7 +165,7 @@ def _print(pt, order):
     if sys.version_info >= (3, 0):
         print(pt.get_string(sortby=order))
     else:
-        print(strutils.safe_encode(pt.get_string(sortby=order)))
+        print(encodeutils.safe_encode(pt.get_string(sortby=order)))
 
 
 def print_list(objs, fields, formatters={}, order_by=None):
@@ -212,7 +212,7 @@ def find_resource(manager, name_or_id):
         pass
 
     if sys.version_info <= (3, 0):
-        name_or_id = strutils.safe_decode(name_or_id)
+        name_or_id = encodeutils.safe_decode(name_or_id)
 
     # now try to get entity as uuid
     try:
@@ -248,9 +248,9 @@ def find_resource(manager, name_or_id):
         raise exceptions.CommandError(msg)
 
 
-def find_v2vresource(cs, resource):
-    """Get a volume by name or ID."""
-    return find_resource(cs.vservices, resource)
+def find_plan(cs, resource):
+    """Get a resource by name or ID."""
+    return find_resource(cs.plans, resource)
 
 
 def _format_servers_list_networks(server):

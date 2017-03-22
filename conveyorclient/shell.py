@@ -36,7 +36,7 @@ from conveyorclient import exceptions as exc
 from conveyorclient import utils
 import conveyorclient.auth_plugin
 import conveyorclient.extension
-from conveyorclient.common import strutils
+from oslo_utils import strutils
 from conveyorclient.common.gettextutils import _
 from conveyorclient.v1 import shell as shell_v1
 

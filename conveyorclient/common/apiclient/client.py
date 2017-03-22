@@ -36,7 +36,7 @@ except ImportError:
 import requests
 
 from conveyorclient.common.apiclient import exceptions
-from conveyorclient.common import importutils
+from oslo_utils import importutils
 
 
 _logger = logging.getLogger(__name__)

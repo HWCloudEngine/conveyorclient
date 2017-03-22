@@ -28,7 +28,7 @@ from keystoneclient.auth.identity import base
 import requests
 
 from conveyorclient import exceptions
-from conveyorclient.common import strutils
+from oslo_utils import strutils
 from conveyorclient import utils
 
 

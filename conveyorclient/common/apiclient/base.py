@@ -29,7 +29,7 @@ import six
 from six.moves.urllib import parse
 
 from conveyorclient.common.apiclient import exceptions
-from conveyorclient.common import strutils
+from oslo_utils import strutils
 
 
 def getid(obj):

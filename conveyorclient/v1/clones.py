@@ -36,7 +36,14 @@ class ClonesService(base.Resource):
         
     def clone(self, destination, sys_clone):
         """clone plan."""
-        self.manager.clone(self, destination, sys_clone=False)
+        self.manager.clone(self, destination, sys_clone=sys_clone)
+
+    def export_template_and_clone(self, destination, resources={},
+                                  sys_clone=False):
+        """clone plan."""
+        self.manager.export_template_and_clone(self, destination,
+                                               resources=resources,
+                                               sys_clone=sys_clone)
         
 
 class ClonesServiceManager(base.ManagerWithFind):
@@ -86,6 +93,16 @@ class ClonesServiceManager(base.ManagerWithFind):
                                             "template": template
                                           }
                 }
-        
         url = '/clones/%s/action' % plan_id
         return self.api.client.post(url, body=body)
+    
+    def export_template_and_clone(self, plan, destination,
+                                  resources={},
+                                  sys_clone=False):
+        return self._action('export_template_and_clone',
+                            plan,
+                            {
+                             'destination': destination,
+                             'resources': resources,
+                             'sys_clone':  sys_clone
+                            })

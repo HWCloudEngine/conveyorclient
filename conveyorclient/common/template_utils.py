@@ -23,7 +23,7 @@ from six.moves.urllib import request
 
 from conveyorclient.common import template_format
 from conveyorclient import exceptions as  exc
-from conveyorclient.common import jsonutils
+from oslo_serialization import jsonutils
 
 
 def get_template_contents(template_file=None, template_url=None,   

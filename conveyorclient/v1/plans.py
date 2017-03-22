@@ -24,7 +24,7 @@ except ImportError:
 import six
 import base64
 
-from oslo.utils import encodeutils
+from oslo_utils import encodeutils
 from conveyorclient import base
 
 
@@ -32,6 +32,8 @@ class Plan(base.Resource):
     def __repr__(self):
         return "<Plan: %s>" % self.plan_id
 
+    def reset_plan_state(self, state):
+        self.manager.reset_plan_state(self.plan_id, state)
 
 class PlanManager(base.ManagerWithFind):
     """
@@ -171,6 +173,10 @@ class PlanManager(base.ManagerWithFind):
         :rtype: :dict
         """
         return self._action('download_template', plan)
+
+    def reset_plan_state(self, plan, state):
+        
+        self._action("os-reset_state", plan, {"plan_status": state})
 
     def _action(self, action, plan, info=None, **kwargs):
         """
