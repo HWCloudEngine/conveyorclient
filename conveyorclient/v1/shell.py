@@ -316,7 +316,24 @@ def do_plan_delete(cs, args):
             print("Delete for plan %s failed: %s" % (plan, e))
     if failure_count == len(args.plan):
         raise exceptions.CommandError("Unable to delete any of specified plans.")
-    
+
+@utils.arg('plan',
+     metavar="<plan>",
+     nargs='+',
+     help="UUID of plan to delete")
+@utils.service_type(DEFAULT_V2V_SERVICE_TYPE)
+def do_plan_force_delete(cs, args):
+    """Delete a plan."""
+    failure_count = 0
+    for plan in args.plan:
+        try:
+            utils.isUUID(plan, "plan")
+            cs.plans.force_delete_plan(plan)
+        except Exception as e:
+            failure_count += 1
+            print("Force delete for plan %s failed: %s" % (plan, e))
+    if failure_count == len(args.plan):
+        raise exceptions.CommandError("Unable to delete any of specified plans.")
 
 @utils.arg('--resources',
      metavar="<type=resource_type,id=resource_id>",

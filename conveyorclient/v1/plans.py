@@ -35,6 +35,7 @@ class Plan(base.Resource):
     def reset_plan_state(self, state):
         self.manager.reset_plan_state(self.plan_id, state)
 
+
 class PlanManager(base.ManagerWithFind):
     """
     Manage :class:`Resource` resources.
@@ -49,14 +50,12 @@ class PlanManager(base.ManagerWithFind):
         """
         return self._get("/plans/%s" % plan, "plan")
 
-
     def delete(self, plan):
         """
         Delete a plan.
         :param plan: The :class:`Plan` to delete.
         """
         return self._delete("/plans/%s" % plan)
-
 
     def update(self, plan, values):
         """
@@ -69,8 +68,7 @@ class PlanManager(base.ManagerWithFind):
 
         body = {"plan": values}
         self._update("/plans/%s" % plan, body)
-    
-    
+
     def update_plan_resource(self, plan, resources):
         """
         Update resources of a plan.
@@ -80,27 +78,26 @@ class PlanManager(base.ManagerWithFind):
         resources = self._process_update_resources(resources)
         body = {"update_plan_resources": {"resources": resources}}
         return self.api.client.post("/plans/%s/action" % plan, body=body)
-        
 
     def _process_update_resources(self, resources):
-        
+
         if not resources or not isinstance(resources, list):
             raise base.exceptions.BadRequest("'resources' must be a list.")
-        
+
         allowed_actions = ["add", "edit", "delete"]
-        
+
         for attrs in resources:
-            
+
             if not isinstance(attrs, dict):
                 raise base.exceptions.BadRequest("Every item in resources "
                                                  "must be a dict.")
-            
-            #verify keys
+
+            # verify keys
             if "action" not in attrs.keys() or attrs["action"] not in allowed_actions:
                 msg = ("'action' not found or not supported. "
                         "'action' must be one of %s" % allowed_actions)
                 raise base.exceptions.BadRequest(msg)
-            #verify actions
+            # verify actions
             if attrs["action"] == "add" and ("id" not in attrs.keys() or 
                                              "resource_type" not in attrs.keys()):
                 msg = ("'id' and 'resource_type' of new resource "
@@ -114,7 +111,7 @@ class PlanManager(base.ManagerWithFind):
             elif attrs["action"] == "delete" and "resource_id" not in attrs.keys():
                 msg = ("'resource_id' must be provided when deleting resources.")
                 raise base.exceptions.BadRequest(msg)
-            
+
             userdata = attrs.get("user_data")
             if userdata:
                 if six.PY3:
@@ -125,8 +122,7 @@ class PlanManager(base.ManagerWithFind):
                 attrs["user_data"] = userdata_b64
 
         return resources
-    
-    
+
     def list(self, search_opts=None):
         """
         Get a list of all plans.
@@ -141,7 +137,6 @@ class PlanManager(base.ManagerWithFind):
         query_string = "?%s" % urlencode(qparams) if qparams else ""
         return self._list("/plans/detail%s" % query_string, "plans")
 
-
     def create(self, type, resources):
         """
         Create a clone or migrate plan.
@@ -152,10 +147,9 @@ class PlanManager(base.ManagerWithFind):
         """
         if not resources or not isinstance(resources, list):
             raise base.exceptions.BadRequest("'resources' must be a list.")
-        
+
         body = {"plan": {"type": type, "resources": resources}}
         return self._create('/plans', body, 'plan')
-        
 
     def create_plan_by_template(self, template):
         """
@@ -175,8 +169,11 @@ class PlanManager(base.ManagerWithFind):
         return self._action('download_template', plan)
 
     def reset_plan_state(self, plan, state):
-        
+
         self._action("os-reset_state", plan, {"plan_status": state})
+
+    def force_delete_plan(self, plan):
+        self._action('force_delete-plan', plan, {'plan_id': plan})
 
     def _action(self, action, plan, info=None, **kwargs):
         """
@@ -186,4 +183,3 @@ class PlanManager(base.ManagerWithFind):
         self.run_hooks('modify_body_for_action', body, **kwargs)
         url = '/plans/%s/action' % base.getid(plan)
         return self.api.client.post(url, body=body)
-    
