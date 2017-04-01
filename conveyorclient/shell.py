@@ -1,4 +1,3 @@
-
 # Copyright 2011-2014 OpenStack Foundation
 # All Rights Reserved.
 #
@@ -30,23 +29,23 @@ import pkgutil
 import sys
 
 import requests
-
-from conveyorclient import client
-from conveyorclient import exceptions as exc
-from conveyorclient import utils
-import conveyorclient.auth_plugin
-import conveyorclient.extension
-from oslo_utils import strutils
-from conveyorclient.common.gettextutils import _
-from conveyorclient.v1 import shell as shell_v1
+import six
 
 from keystoneclient import discover
 from keystoneclient import session
 from keystoneclient.auth.identity import v2 as v2_auth
 from keystoneclient.auth.identity import v3 as v3_auth
 from keystoneclient.exceptions import DiscoveryFailure
+from oslo_utils import encodeutils
 import six.moves.urllib.parse as urlparse
 
+from conveyorclient import client
+from conveyorclient import exceptions as exc
+from conveyorclient import utils
+import conveyorclient.auth_plugin
+import conveyorclient.extension
+from conveyorclient.common.gettextutils import _
+from conveyorclient.v1 import shell as shell_v1
 
 DEFAULT_OS_CONVEYOR_API_VERSION = "1"
 DEFAULT_CONVEYOR_ENDPOINT_TYPE = 'publicURL'
@@ -838,14 +837,14 @@ def main():
         if sys.version_info >= (3, 0):
             OpenStackConveyorShell().main(sys.argv[1:])
         else:
-            OpenStackConveyorShell().main(map(strutils.safe_decode,
-                                            sys.argv[1:]))
+            OpenStackConveyorShell().main(map(encodeutils.safe_decode,
+                                              sys.argv[1:]))
     except KeyboardInterrupt:
         print("... terminating conveyor client", file=sys.stderr)
         sys.exit(130)
     except Exception as e:
         logger.debug(e, exc_info=1)
-        print("ERROR: %s" % strutils.six.text_type(e), file=sys.stderr)
+        print("ERROR: %s" % six.text_type(e), file=sys.stderr)
         sys.exit(1)
 
 
