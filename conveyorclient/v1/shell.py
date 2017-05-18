@@ -1,20 +1,16 @@
-# Copyright 2010 Jacob Kaplan-Moss
+# Copyright (c) 2017 Huawei, Inc.
 #
-# Copyright (c) 2011-2014 OpenStack Foundation
-# All Rights Reserved.
+#    Licensed under the Apache License, Version 2.0 (the "License"); you may
+#    not use this file except in compliance with the License. You may obtain
+#    a copy of the License at
 #
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
+#         http://www.apache.org/licenses/LICENSE-2.0
 #
-#    http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or
-# implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
+#    Unless required by applicable law or agreed to in writing, software
+#    distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+#    WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+#    License for the specific language governing permissions and limitations
+#    under the License.
 
 from __future__ import print_function
 
@@ -77,7 +73,6 @@ def _translate_keys(collection, convert):
                 setattr(item, to_key, item._info[from_key])
 
 
- 
 def _extract_metadata(args):
     metadata = {}
     for metadatum in args.metadata:
@@ -103,6 +98,7 @@ def do_export_clone_template(cs, args):
     """export a clone template. """
     cs.clones.export_clone_template(args.plan, args.sys_clone)
 
+
 @utils.arg('plan',
     metavar='<plan>',
     help=_('Name or ID of plan.'))
@@ -117,12 +113,14 @@ def do_clone(cs, args):
     """clone resources """
     cs.clones.clone(args.plan, args.destination, args.sys_clone)
 
+
 @utils.arg('plan',
     metavar='<plan>',
     help=_('Name or ID of plan.'))
 def do_export_migrate_template(cs, args):
     """export a migrate template. """
     cs.migrates.export_migrate_template(args.plan)
+
 
 @utils.arg('plan',
     metavar='<plan>',
@@ -133,7 +131,7 @@ def do_export_migrate_template(cs, args):
 def do_migrate(cs, args):
     """migrate resources """
     cs.migrates.migrate(args.plan, args.destination)
-    
+
 
 def do_endpoints(cs, args):
     """Discovers endpoints registered by authentication service."""
@@ -142,13 +140,12 @@ def do_endpoints(cs, args):
         utils.print_dict(e['endpoints'][0], e['name'])
 
 
-
 @utils.service_type(DEFAULT_V2V_SERVICE_TYPE)
 def do_resource_type_list(cs, args):
     """Get the types of resources which can be cloned or migrated."""
     types = cs.resources.resource_type_list()
-    #print(types)
     utils.print_list(types, ["type"])
+
 
 @utils.arg(
     '--all-tenants',
@@ -193,7 +190,6 @@ def do_resource_list(cs, args):
 def do_resource_show(cs, args):
     """Get resource details of specified type."""
     resource = cs.resources.get_resource_detail(args.type, args.id)
-    #print(resource)
     utils.print_json(resource)
 
 
@@ -344,7 +340,7 @@ def do_plan_list(cs, args):
                           limit=args.limit,
                           sort_key=args.sort_key,
                           sort_dir=args.sort_dir)
-    key_list = ['plan_id', 'plan_type', 'plan_status', 
+    key_list = ['plan_id', 'plan_name', 'plan_type', 'plan_status',
                 'task_status', 'created_at', 'expire_at']
     if all_tenants:
         key_list.append('project_id')
@@ -360,7 +356,8 @@ def do_plan_show(cs, args):
     utils.isUUID(args.plan, "plan")
     plan = cs.plans.get(args.plan)
     _print_plan(plan)
-    
+
+
 @utils.arg('plan',
      metavar="<plan>",
      nargs='+',
@@ -378,6 +375,7 @@ def do_plan_delete(cs, args):
             print("Delete for plan %s failed: %s" % (plan, e))
     if failure_count == len(args.plan):
         raise exceptions.CommandError("Unable to delete any of specified plans.")
+
 
 @utils.arg('plan',
      metavar="<plan>",
@@ -482,6 +480,7 @@ def do_template_clone(cs, args):
     plan_id = args.plan_id
     cs.clones.start_clone_template(plan_id, disable_rollback, template)
 
+
 @utils.arg(
     '-p', '--properties',
     metavar='<key=value>',
@@ -514,6 +513,7 @@ def do_update_configs(cs, args):
     else:
         msg = "Update configuration info properties is empty"
         raise exceptions.CommandError(msg)
+
 
 def _extract_plan_resource_update_args(res_args):
     res = []
@@ -585,9 +585,11 @@ def _extract_resource_argument(arg_res, res_type_list):
         resources.append(res_opts) 
     return resources
 
+
 def _print_plan(plan):
     print("%s:" % plan.plan_id)
     res = {'plan_id': plan.plan_id,
+           'plan_name': plan.plan_name,
            'plan_type': plan.plan_type,
            'plan_status':plan.plan_status,
            'task_status': plan.task_status,
@@ -603,6 +605,7 @@ def _print_plan(plan):
            #'updated_dependencies': plan.updated_dependencies
            }
     utils.print_json(res)
+
 
 def _print_resources(resources, type):
     if "OS::Nova::Server" == type:
@@ -627,7 +630,8 @@ def _print_resources(resources, type):
         utils.print_list(resources, columns, formatters)
     else:
         print(resources)
-     
+
+
 def _translate_server_networks(servers):
     for server in servers:
         networks = {}
@@ -662,6 +666,7 @@ def _translate_extended_states(collection):
             getattr(item, 'task_state')
         except AttributeError:
             setattr(item, 'task_state', "N/A")
+
 
 def _translate_string_dict(string):
     
