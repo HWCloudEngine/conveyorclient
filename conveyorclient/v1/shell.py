@@ -26,12 +26,14 @@ import time
 import six
 import re
 
-from conveyorclient import exceptions
-from conveyorclient import utils
+from conveyorclient.common import constants
 from conveyorclient.common.gettextutils import _
 from conveyorclient.common import template_utils
+from conveyorclient import exceptions
+from conveyorclient import utils
 
 DEFAULT_V2V_SERVICE_TYPE = 'conveyor'
+
 
 def _poll_for_status(poll_fn, obj_id, action, final_ok_states,
                      poll_period=5, show_progress=True):
@@ -261,6 +263,24 @@ def do_plan_resource_update(cs, args):
 
 
 @utils.arg(
+    '--plan-name',
+    dest='plan_name',
+    metavar='<plan_plan>',
+    default=None,
+    help='Search with plan name')
+@utils.arg(
+    '--plan-status',
+    dest='plan_status',
+    metavar='<plan_status>',
+    default=None,
+    help='Filter results by plan_status')
+@utils.arg(
+    '--plan-type',
+    dest='plan_type',
+    metavar='<plan_type>',
+    choices=['clone', 'migrate'],
+    help='Filter results by plan_type')
+@utils.arg(
     '--all-tenants',
     dest='all_tenants',
     metavar='<0|1>',
@@ -275,13 +295,55 @@ def do_plan_resource_update(cs, args):
     type=int,
     const=1,
     help=argparse.SUPPRESS)
+@utils.arg(
+    '--sort-key',
+    dest='sort_key',
+    metavar='<sort_key>',
+    default=None,
+    help='Key to be sorted, available keys are %(keys)s. '
+         'OPTIONAL: Default=None.' % {'keys': constants.PLAN_SORT_KEY_VALUES})
+@utils.arg(
+    '--sort-dir',
+    dest='sort_dir',
+    metavar='<dort_dir>',
+    default=None,
+    help='Sort direction, available values are %(values)s. '
+         'OPTIONAL: Default=None.' % {'values': constants.SORT_DIR_VALUES})
+@utils.arg(
+    '--marker',
+    dest='marker',
+    metavar='<marker>',
+    default=None,
+    help='The last plan UUID of the previous page; displays list of '
+         'plans after "marker".')
+@utils.arg(
+    '--limit',
+    dest='limit',
+    metavar='<limit>',
+    type=int,
+    default=None,
+    help='Maximum number of plans to display. If limit == -1, all plans '
+         'will be displayed. If limit is bigger than "osapi_max_limit" '
+         'option of Conveyor API, limit "osapi_max_limit" will be used '
+         'instead.'
+)
 @utils.service_type(DEFAULT_V2V_SERVICE_TYPE)
 def do_plan_list(cs, args):
     """Get a list of all plans."""
     all_tenants = int(os.environ.get("ALL_TENANTS", args.all_tenants))
-    #TODO  search_opts, eg: all_tenants
-    search_opts = {}
-    plans = cs.plans.list(search_opts=search_opts)
+
+    search_opts = {
+        'all_tenants': all_tenants,
+        'plan_name': args.plan_name,
+        'plan_type': args.plan_type,
+        'plan_status': args.plan_status
+    }
+
+    plans = cs.plans.list(search_opts=search_opts,
+                          marker=args.marker,
+                          limit=args.limit,
+                          sort_key=args.sort_key,
+                          sort_dir=args.sort_dir)
     key_list = ['plan_id', 'plan_type', 'plan_status', 
                 'task_status', 'created_at', 'expire_at']
     if all_tenants:

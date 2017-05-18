@@ -123,7 +123,8 @@ class PlanManager(base.ManagerWithFind):
 
         return resources
 
-    def list(self, search_opts=None):
+    def list(self, search_opts=None, marker=None, limit=None, sort_key=None,
+             sort_dir=None):
         """
         Get a list of all plans.
         :rtype: list of :class:`Plan`
@@ -134,21 +135,40 @@ class PlanManager(base.ManagerWithFind):
         for opt, val in search_opts.items():
             if val:
                 qparams[opt] = val
-        query_string = "?%s" % urlencode(qparams) if qparams else ""
+
+        if marker:
+            qparams['marker'] = marker
+
+        if limit and limit != -1:
+            qparams['limit'] = limit
+
+        if sort_key is not None:
+            qparams['sort_key'] = sort_key
+
+        if sort_dir is not None:
+            qparams['sort_dir'] = sort_dir
+
+        if qparams:
+            query_string = "?%s" % urlencode(
+                sorted(list(qparams.items()), key=lambda x: x[0]))
+        else:
+            query_string = ""
         return self._list("/plans/detail%s" % query_string, "plans")
 
-    def create(self, type, resources):
+    def create(self, type, resources, plan_name=None):
         """
         Create a clone or migrate plan.
         :param type: plan type. 'clone' or 'migrate'
         :param resources: A list of resources. "
                         "Eg: [{'type':'OS::Nova::Server', 'id':'xx'}]
+        :param name: plan name.
         :rtype: :class:`Plan (Actually, only plan_id and resource_dependencies)`
         """
         if not resources or not isinstance(resources, list):
             raise base.exceptions.BadRequest("'resources' must be a list.")
 
-        body = {"plan": {"type": type, "resources": resources}}
+        body = {"plan": {"type": type, "resources": resources,
+                         "plan_name": plan_name}}
         return self._create('/plans', body, 'plan')
 
     def create_plan_by_template(self, template):
