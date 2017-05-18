@@ -261,6 +261,12 @@ def do_plan_resource_update(cs, args):
 
 
 @utils.arg(
+    '--plan-name',
+    dest='plan_name',
+    metavar='<plan_plan>',
+    default=None,
+    help='Search with plan name')
+@utils.arg(
     '--all-tenants',
     dest='all_tenants',
     metavar='<0|1>',
@@ -275,13 +281,58 @@ def do_plan_resource_update(cs, args):
     type=int,
     const=1,
     help=argparse.SUPPRESS)
+@utils.arg(
+    '--sort',
+    dest='sort',
+    metavar='<key>[:<direction>]',
+    help='Comma-separated list of sort keys and directions in the form '
+         'of <key>[:<asc|desc>]. The direction default to descending if '
+         'not specified.')
+@utils.arg(
+    '--marker',
+    dest='marker',
+    metavar='<marker>',
+    default=None,
+    help='The last plan UUID of the previous page; displays list of '
+         'plans after "marker".')
+@utils.arg(
+    '--limit',
+    dest='limit',
+    metavar='<limit>',
+    type=int,
+    default=None,
+    help='Maximum number of plans to display. If limit == -1, all plans '
+         'will be displayed. If limit is bigger than "osapi_max_limit" '
+         'option of Conveyor API, limit "osapi_max_limit" will be used '
+         'instead.'
+)
 @utils.service_type(DEFAULT_V2V_SERVICE_TYPE)
 def do_plan_list(cs, args):
     """Get a list of all plans."""
     all_tenants = int(os.environ.get("ALL_TENANTS", args.all_tenants))
     #TODO  search_opts, eg: all_tenants
-    search_opts = {}
-    plans = cs.plans.list(search_opts=search_opts)
+    search_opts = {
+        'all_tenants': args.all_tenants,
+        'plan_name': args.plan_name
+    }
+
+    sort_keys = []
+    sort_dirs = []
+    if args.sort:
+        for sort in args.sort.split(','):
+            sort_key, _sep, sort_dir = sort.partition(':')
+            if not sort_dir:
+                sort_dir = 'desc'
+            elif sort_dir not in ('asc', 'desc'):
+                raise exceptions.CommandError(
+                    _('Unknown sort direction: %s') % sort_dir)
+            sort_keys.append(sort_key)
+            sort_dirs.append(sort_dir)
+    plans = cs.plans.list(search_opts=search_opts,
+                          sort_keys=sort_keys,
+                          sort_dirs=sort_dirs,
+                          marker=args.marker,
+                          limit=args.limit)
     key_list = ['plan_id', 'plan_type', 'plan_status', 
                 'task_status', 'created_at', 'expire_at']
     if all_tenants:
