@@ -1,20 +1,16 @@
-# Copyright 2010 Jacob Kaplan-Moss
+# Copyright (c) 2017 Huawei, Inc.
 #
-# Copyright (c) 2011-2014 OpenStack Foundation
-# All Rights Reserved.
+#    Licensed under the Apache License, Version 2.0 (the "License"); you may
+#    not use this file except in compliance with the License. You may obtain
+#    a copy of the License at
 #
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
+#         http://www.apache.org/licenses/LICENSE-2.0
 #
-#    http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or
-# implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
+#    Unless required by applicable law or agreed to in writing, software
+#    distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+#    WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+#    License for the specific language governing permissions and limitations
+#    under the License.
 
 from __future__ import print_function
 
@@ -77,7 +73,6 @@ def _translate_keys(collection, convert):
                 setattr(item, to_key, item._info[from_key])
 
 
- 
 def _extract_metadata(args):
     metadata = {}
     for metadatum in args.metadata:
@@ -95,7 +90,7 @@ def _extract_metadata(args):
 @utils.arg('plan',
     metavar='<plan>',
     help=_('Name or ID of plan.'))
-@utils.arg('--sys_clone',  
+@utils.arg('--sys_clone',
            metavar='<sys_clone>',
            default=False,
            help='Clone the system volume as well or not.')
@@ -103,13 +98,14 @@ def do_export_clone_template(cs, args):
     """export a clone template. """
     cs.clones.export_clone_template(args.plan, args.sys_clone)
 
+
 @utils.arg('plan',
     metavar='<plan>',
     help=_('Name or ID of plan.'))
 @utils.arg('destination',
      metavar="<destination>",
      help="The destination of clone plan")
-@utils.arg('--sys_clone',  
+@utils.arg('--sys_clone',
            metavar='<sys_clone>',
            default=False,
            help='Clone the system volume as well or not.')
@@ -117,12 +113,14 @@ def do_clone(cs, args):
     """clone resources """
     cs.clones.clone(args.plan, args.destination, args.sys_clone)
 
+
 @utils.arg('plan',
     metavar='<plan>',
     help=_('Name or ID of plan.'))
 def do_export_migrate_template(cs, args):
     """export a migrate template. """
     cs.migrates.export_migrate_template(args.plan)
+
 
 @utils.arg('plan',
     metavar='<plan>',
@@ -133,7 +131,7 @@ def do_export_migrate_template(cs, args):
 def do_migrate(cs, args):
     """migrate resources """
     cs.migrates.migrate(args.plan, args.destination)
-    
+
 
 def do_endpoints(cs, args):
     """Discovers endpoints registered by authentication service."""
@@ -142,13 +140,12 @@ def do_endpoints(cs, args):
         utils.print_dict(e['endpoints'][0], e['name'])
 
 
-
 @utils.service_type(DEFAULT_V2V_SERVICE_TYPE)
 def do_resource_type_list(cs, args):
     """Get the types of resources which can be cloned or migrated."""
     types = cs.resources.resource_type_list()
-    #print(types)
     utils.print_list(types, ["type"])
+
 
 @utils.arg(
     '--all-tenants',
@@ -193,7 +190,6 @@ def do_resource_list(cs, args):
 def do_resource_show(cs, args):
     """Get resource details of specified type."""
     resource = cs.resources.get_resource_detail(args.type, args.id)
-    #print(resource)
     utils.print_json(resource)
 
 
@@ -344,12 +340,12 @@ def do_plan_list(cs, args):
                           limit=args.limit,
                           sort_key=args.sort_key,
                           sort_dir=args.sort_dir)
-    key_list = ['plan_id', 'plan_type', 'plan_status', 
+    key_list = ['plan_id', 'plan_name', 'plan_type', 'plan_status',
                 'task_status', 'created_at', 'expire_at']
     if all_tenants:
         key_list.append('project_id')
     utils.print_list(plans, key_list)
-    
+
 
 @utils.arg('plan',
      metavar="<plan>",
@@ -360,7 +356,8 @@ def do_plan_show(cs, args):
     utils.isUUID(args.plan, "plan")
     plan = cs.plans.get(args.plan)
     _print_plan(plan)
-    
+
+
 @utils.arg('plan',
      metavar="<plan>",
      nargs='+',
@@ -379,6 +376,7 @@ def do_plan_delete(cs, args):
     if failure_count == len(args.plan):
         raise exceptions.CommandError("Unable to delete any of specified plans.")
 
+
 @utils.arg('plan',
      metavar="<plan>",
      nargs='+',
@@ -396,6 +394,7 @@ def do_plan_force_delete(cs, args):
             print("Force delete for plan %s failed: %s" % (plan, e))
     if failure_count == len(args.plan):
         raise exceptions.CommandError("Unable to delete any of specified plans.")
+
 
 @utils.arg('--resources',
      metavar="<type=resource_type,id=resource_id>",
@@ -477,10 +476,11 @@ def do_template_clone(cs, args):
     '''Clone resource'''
     tpl_files, template = template_utils.get_template_contents(
         args.template_file)
-   
+
     disable_rollback =  not(args.enable_rollback)
     plan_id = args.plan_id
     cs.clones.start_clone_template(plan_id, disable_rollback, template)
+
 
 @utils.arg(
     '-p', '--properties',
@@ -490,22 +490,22 @@ def do_template_clone(cs, args):
          'conveyor service.')
 @utils.service_type('conveyorConfig')
 def do_update_configs(cs, args):
-    
+
     fields_list = ['properties']
     fields = dict((k, v) for (k, v) in vars(args).items()
                   if k in fields_list and not (v is None))
-    
+
     fields = utils.args_array_to_dict(fields, 'properties')
     fields = fields.get('properties', {})
     input_dict = {}
-    
+
     try:
         for k, v in fields.items():
             input_dict[k] =  _translate_string_dict(v)
     except ValueError:
         msg = "Input configure key value must be like 'v' or 'k:v' or 'v1,v2'"
         raise exceptions.CommandError(msg)
-    
+
     if input_dict:
         param = {}
         param['config_file'] = input_dict.pop('config-file', None)
@@ -515,12 +515,13 @@ def do_update_configs(cs, args):
         msg = "Update configuration info properties is empty"
         raise exceptions.CommandError(msg)
 
+
 def _extract_plan_resource_update_args(res_args):
     res = []
-    
+
     if len(res_args) < 1:
         raise exceptions.CommandError("'resource' argument must be provided.")
-    
+
     for items in res_args:
         
         def _replace(m):
@@ -528,14 +529,13 @@ def _extract_plan_resource_update_args(res_args):
             if s[0] in "\"'":
                 return s
             if m.group(1):
-                #return '"%s"' % s.replace('-', '_')
                 return '"%s"' % s if s != ':' else s
             return s.replace('=', ':')
         
         new_items = re.sub(r""""[^"]*"|'[^']*'|([:A-Za-z0-9./_-]+)|.""", _replace, items)
 
         try:
-            attrs = eval("{ %s }"  % new_items)
+            attrs = eval("{ %s }" % new_items)
         except Exception as e:
             msg = "Invalid resource: %s. %s" % (items, unicode(e))
             raise exceptions.CommandError(msg)
@@ -547,22 +547,22 @@ def _extract_plan_resource_update_args(res_args):
                 if special_value.startswith('/'):
                     with open(special_value, 'r') as f:
                         attrs[sf] = f.read()
-        
+
         res.append(attrs)
-        
+
     return res
 
 
 def _extract_resource_argument(arg_res, res_type_list):
     resources = []
-    
+
     for res in arg_res:
         err_msg = ("Invalid resource argument '%s'. "
-                     "Resource arguments must contain both type and id! "
-                     "Eg: --resource type=OS::Nova::Server,id=xxxxx.") % res
-        
+                   "Resource arguments must contain both type and id! "
+                   "Eg: --resource type=OS::Nova::Server,id=xxxxx.") % res
+
         res_opts = {'type': '', 'id':''}
-        
+
         for param in res.split(","):
             try:
                 k, v = param.split("=", 1)
@@ -572,22 +572,24 @@ def _extract_resource_argument(arg_res, res_type_list):
                 res_opts[k] = v
             else:
                 raise exceptions.CommandError(err_msg)
-        
+
         if not res_opts['type'] or not res_opts['id']:
             raise exceptions.CommandError(err_msg)
-        
+
         if res_opts['type'] not in res_type_list:
             msg = "Type unsupported! You can get the types by the command: conveyor resource-type-list"
             raise exceptions.CommandError(msg)
-        
+
         utils.isUUID(res_opts['id'], "id")
-        
-        resources.append(res_opts) 
+
+        resources.append(res_opts)
     return resources
+
 
 def _print_plan(plan):
     print("%s:" % plan.plan_id)
     res = {'plan_id': plan.plan_id,
+           'plan_name': plan.plan_name,
            'plan_type': plan.plan_type,
            'plan_status':plan.plan_status,
            'task_status': plan.task_status,
@@ -603,6 +605,7 @@ def _print_plan(plan):
            #'updated_dependencies': plan.updated_dependencies
            }
     utils.print_json(res)
+
 
 def _print_resources(resources, type):
     if "OS::Nova::Server" == type:
@@ -627,7 +630,8 @@ def _print_resources(resources, type):
         utils.print_list(resources, columns, formatters)
     else:
         print(resources)
-     
+
+
 def _translate_server_networks(servers):
     for server in servers:
         networks = {}
@@ -637,7 +641,7 @@ def _translate_server_networks(servers):
         except Exception:
             pass
         setattr(server, "networks", networks)
-        
+
         
 def _translate_extended_states(collection):
     power_states = [
@@ -654,8 +658,7 @@ def _translate_extended_states(collection):
     for item in collection:
         try:
             setattr(item, 'power_state',
-                power_states[getattr(item, 'power_state')]
-            )
+                    power_states[getattr(item, 'power_state')])
         except AttributeError:
             setattr(item, 'power_state', "N/A")
         try:
@@ -663,8 +666,9 @@ def _translate_extended_states(collection):
         except AttributeError:
             setattr(item, 'task_state', "N/A")
 
+
 def _translate_string_dict(string):
-    
+
     # if dict
     if (':' in string):
         if '{' == string[0] and '}' == string[-1]:
