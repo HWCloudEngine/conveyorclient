@@ -16,11 +16,12 @@
 from conveyorclient import client
 from conveyorclient.v1 import clones
 from conveyorclient.v1 import configuration
-from conveyorclient.v1 import resources
-from conveyorclient.v1 import plans
 from conveyorclient.v1 import migrates
+from conveyorclient.v1 import plans
+from conveyorclient.v1 import resources
 
 DEFAULT_CONVEYOR_SERVICE_TYPE = 'conveyor'
+
 
 class Client(object):
     """

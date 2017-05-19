@@ -1,5 +1,4 @@
-# Copyright 2011 Denali Systems, Inc.
-# All Rights Reserved.
+# Copyright (c) 2017 Huawei, Inc.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License"); you may
 #    not use this file except in compliance with the License. You may obtain
@@ -13,15 +12,6 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-"""
-Volume interface (1.1 extension).
-"""
-
-try:
-    from urllib import urlencode
-except ImportError:
-    from urllib.parse import urlencode
-import six
 from conveyorclient import base
 
 

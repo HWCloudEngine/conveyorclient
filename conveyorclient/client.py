@@ -22,16 +22,6 @@ from __future__ import print_function
 
 import logging
 
-from keystoneclient import access
-from keystoneclient import adapter
-from keystoneclient.auth.identity import base
-import requests
-
-from conveyorclient import exceptions
-from oslo_utils import strutils
-from conveyorclient import utils
-
-
 try:
     import urlparse
 except ImportError:
@@ -46,6 +36,15 @@ try:
     import json
 except ImportError:
     import simplejson as json
+
+from keystoneclient import access
+from keystoneclient import adapter
+from keystoneclient.auth.identity import base
+import requests
+from oslo_utils import strutils
+
+from conveyorclient import exceptions
+from conveyorclient import utils
 
 # Python 2.5 compat fix
 if not hasattr(urlparse, 'parse_qsl'):
@@ -81,8 +80,8 @@ class SessionClient(adapter.LegacyJsonAdapter):
         kwargs.setdefault('authenticated', False)
         raise_exc = kwargs.pop('raise_exc', True)
         resp, body = super(SessionClient, self).request(*args,
-                                                           raise_exc=False,
-                                                           **kwargs)
+                                                        raise_exc=False,
+                                                        **kwargs)
         if raise_exc and resp.status_code >= 400:
             raise exceptions.from_response(resp, body)
         return resp, body
@@ -482,7 +481,7 @@ def _construct_http_client(username=None, password=None, project_id=None,
                            proxy_tenant_id=None, proxy_token=None,
                            region_name=None, endpoint_type='publicURL',
                            service_type=DEFAULT_CONVEYOR_SERVICE_TYPE,
-                           service_name=None, 
+                           service_name=None,
                            retries=None,
                            http_log_debug=False,
                            auth_system='keystone', auth_plugin=None,

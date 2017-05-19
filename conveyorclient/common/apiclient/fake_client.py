@@ -79,7 +79,7 @@ class FakeHTTPClient(client.HTTPClient):
     def __init__(self, *args, **kwargs):
         self.callstack = []
         self.fixtures = kwargs.pop("fixtures", None) or {}
-        if not args and not "auth_plugin" in kwargs:
+        if not args and "auth_plugin" not in kwargs:
             args = (None, )
         super(FakeHTTPClient, self).__init__(*args, **kwargs)
 
@@ -100,8 +100,7 @@ class FakeHTTPClient(client.HTTPClient):
                                      (self.callstack[pos][3], body))
 
     def assert_called_anytime(self, method, url, body=None):
-        """Assert than an API method was called anytime in the test.
-        """
+        """Assert than an API method was called anytime in the test."""
         expected = (method, url)
 
         assert self.callstack, \

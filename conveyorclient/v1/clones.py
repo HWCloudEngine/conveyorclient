@@ -1,5 +1,4 @@
-# Copyright 2011 Denali Systems, Inc.
-# All Rights Reserved.
+# Copyright (c) 2017 Huawei, Inc.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License"); you may
 #    not use this file except in compliance with the License. You may obtain
@@ -13,15 +12,6 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-"""
-Volume interface (1.1 extension).
-"""
-
-try:
-    from urllib import urlencode
-except ImportError:
-    from urllib.parse import urlencode
-import six
 from conveyorclient import base
 
 
@@ -33,7 +23,7 @@ class ClonesService(base.Resource):
     def export_clone_template(self, sys_clone=False):
         """export clone template for this resource."""
         self.manager.export_clone_template(self, sys_clone)
-        
+
     def clone(self, destination, sys_clone):
         """clone plan."""
         self.manager.clone(self, destination, sys_clone=sys_clone)
@@ -44,14 +34,13 @@ class ClonesService(base.Resource):
         self.manager.export_template_and_clone(self, destination,
                                                resources=resources,
                                                sys_clone=sys_clone)
-        
+
 
 class ClonesServiceManager(base.ManagerWithFind):
     """
     Manage :class:`Clones` resources.
     """
     resource_class = ClonesService
-
 
     def list(self):
         pass
@@ -65,7 +54,7 @@ class ClonesServiceManager(base.ManagerWithFind):
         return self._action('export_clone_template',
                             plan,
                             {
-                             'sys_clone':  sys_clone
+                                'sys_clone': sys_clone
                             })
 
     def clone(self, plan, destination, sys_clone=False):
@@ -73,7 +62,7 @@ class ClonesServiceManager(base.ManagerWithFind):
                             plan,
                             {
                                 'destination': destination,
-                                'sys_clone':  sys_clone
+                                'sys_clone': sys_clone
                             })
 
     def _action(self, action, plan, info=None, **kwargs):
@@ -87,22 +76,23 @@ class ClonesServiceManager(base.ManagerWithFind):
 
     def start_clone_template(self, plan_id, disable_rollback,
                              template, **kwargs):
-        body = {"clone_element_template": {
-                                            "disable_rollback": disable_rollback,
-                                            "plan_id": plan_id,
-                                            "template": template
-                                          }
-                }
+        body = {
+            "clone_element_template": {
+                "disable_rollback": disable_rollback,
+                "plan_id": plan_id,
+                "template": template
+            }
+        }
         url = '/clones/%s/action' % plan_id
         return self.api.client.post(url, body=body)
-    
+
     def export_template_and_clone(self, plan, destination,
                                   resources={},
                                   sys_clone=False):
         return self._action('export_template_and_clone',
                             plan,
                             {
-                             'destination': destination,
-                             'resources': resources,
-                             'sys_clone':  sys_clone
+                                'destination': destination,
+                                'resources': resources,
+                                'sys_clone': sys_clone
                             })

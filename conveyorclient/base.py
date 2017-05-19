@@ -25,10 +25,9 @@ import os
 
 import six
 
-from conveyorclient import exceptions
 from conveyorclient.common.apiclient import base as common_base
+from conveyorclient import exceptions
 from conveyorclient import utils
-
 
 Resource = common_base.Resource
 

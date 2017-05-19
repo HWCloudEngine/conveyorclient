@@ -527,18 +527,17 @@ class OpenStackConveyorShell(object):
 
         (os_username, os_password, os_tenant_name, os_auth_url,
          os_region_name, os_tenant_id, endpoint_type, insecure,
-         service_type, service_name, conveyor_service_name,
-         cacert, os_auth_system) = (
+         service_type, service_name, cacert, os_auth_system) = (
              args.os_username, args.os_password,
              args.os_tenant_name, args.os_auth_url,
              args.os_region_name, args.os_tenant_id,
              args.endpoint_type, args.insecure,
              args.service_type, args.service_name,
-             args.conveyor_service_name, args.os_cacert,
-             args.os_auth_system)
+             args.os_cacert, args.os_auth_system)
 
         if os_auth_system and os_auth_system != "keystone":
-            auth_plugin = conveyorclient.auth_plugin.load_plugin(os_auth_system)
+            auth_plugin = conveyorclient.auth_plugin.load_plugin(
+                os_auth_system)
         else:
             auth_plugin = None
 
@@ -640,8 +639,8 @@ class OpenStackConveyorShell(object):
         endpoint_api_version = None
         # Try to get the API version from the endpoint URL.  If that fails fall
         # back to trying to use what the user specified via
-        # --os-conveyor-api-version or with the OS_CONVEYOR_API_VERSION environment
-        # variable.  Fail safe is to use the default API setting.
+        # --os-conveyor-api-version or with the OS_CONVEYOR_API_VERSION
+        # environment variable.  Fail safe is to use the default API setting.
         try:
             endpoint_api_version = \
                 self.cs.get_conveyor_api_version_from_endpoint()
@@ -650,7 +649,8 @@ class OpenStackConveyorShell(object):
                         "but you are accessing a %s endpoint. "
                         "Change its value through --os-conveyor-api-version "
                         "or env[OS_CONVEYOR_API_VERSION].")
-                       % (options.os_conveyor_api_version, endpoint_api_version))
+                       % (options.os_conveyor_api_version,
+                          endpoint_api_version))
                 raise exc.InvalidAPIVersion(msg)
         except exc.UnsupportedVersion:
             endpoint_api_version = options.os_conveyor_api_version
@@ -768,7 +768,7 @@ class OpenStackConveyorShell(object):
             elif path.startswith('/v2'):
                 v2_auth_url = auth_url
             else:
-		logging.exception(e)
+                logging.exception(e)
                 raise exc.CommandError('Unable to determine the Keystone'
                                        ' version to authenticate with '
                                        'using the given auth_url.')

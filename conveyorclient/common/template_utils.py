@@ -14,19 +14,19 @@
 #    under the License.
 
 import base64
-import collections
 import os
+
+from oslo_serialization import jsonutils
 import six
 from six.moves.urllib import error
 from six.moves.urllib import parse
 from six.moves.urllib import request
 
 from conveyorclient.common import template_format
-from conveyorclient import exceptions as  exc
-from oslo_serialization import jsonutils
+from conveyorclient import exceptions as exc
 
 
-def get_template_contents(template_file=None, template_url=None,   
+def get_template_contents(template_file=None, template_url=None,
                           files=None):
 
     # Transform a bare file path to a file:// URL.
@@ -140,23 +140,14 @@ def read_url_content(url):
     return content
 
 
-
-
-
 def normalise_file_path_to_url(path):
     if parse.urlparse(path).scheme:
         return path
     path = os.path.abspath(path)
     return parse.urljoin('file:', request.pathname2url(path))
 
+
 def base_url_for_url(url):
     parsed = parse.urlparse(url)
     parsed_dir = os.path.dirname(parsed.path)
     return parse.urljoin(url, parsed_dir)
-
-
-
-
-
-
-

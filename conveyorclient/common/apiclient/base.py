@@ -25,11 +25,11 @@ Base utilities to build API operation managers and objects on top of.
 
 import abc
 
+from oslo_utils import strutils
 import six
 from six.moves.urllib import parse
 
 from conveyorclient.common.apiclient import exceptions
-from oslo_utils import strutils
 
 
 def getid(obj):
@@ -455,7 +455,7 @@ class Resource(object):
 
     def __getattr__(self, k):
         if k not in self.__dict__:
-            #NOTE(bcwaldon): disallow lazy-loading if already loaded once
+            # NOTE(bcwaldon): disallow lazy-loading if already loaded once
             if not self.is_loaded():
                 self.get()
                 return self.__getattr__(k)

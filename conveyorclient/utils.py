@@ -22,11 +22,12 @@ import sys
 import uuid
 import json
 
-import six
 import prettytable
+import six
+
+from oslo_utils import encodeutils
 
 from conveyorclient import exceptions
-from oslo_utils import encodeutils
 
 
 def arg(*args, **kwargs):
@@ -330,12 +331,14 @@ def slugify(value):
     value = six.text_type(_slugify_strip_re.sub('', value).strip().lower())
     return _slugify_hyphenate_re.sub('-', value)
 
+
 def args_array_to_dict(kwargs, key_to_convert):
     values_to_convert = kwargs.get(key_to_convert)
     if values_to_convert:
         kwargs[key_to_convert] = dict(split_and_deserialize(v)
                                       for v in values_to_convert)
     return kwargs
+
 
 def split_and_deserialize(string):
     """Split and try to JSON deserialize a string.
@@ -349,11 +352,10 @@ def split_and_deserialize(string):
         key, value = string.split("=", 1)
     except ValueError:
         raise exceptions.CommandError(_('Attributes must be a list of '
-                                 'PATH=VALUE not "%s"') % string)
+                                        'PATH=VALUE not "%s"') % string)
     try:
         value = json.loads(value)
     except ValueError:
         pass
 
     return (key, value)
-

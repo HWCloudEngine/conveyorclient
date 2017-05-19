@@ -83,6 +83,7 @@ class ServiceCatalog(object):
                 eplist = [ep[attr] for ep in matching_endpoints]
             except KeyError:
                 eplist = matching_endpoints
-            raise conveyorclient.exceptions.AmbiguousEndpoints(endpoints=eplist)
+            raise conveyorclient.exceptions.AmbiguousEndpoints(
+                endpoints=eplist)
         else:
             return matching_endpoints[0][endpoint_type]

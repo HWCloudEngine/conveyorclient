@@ -1,5 +1,4 @@
-# Copyright 2011 Denali Systems, Inc.
-# All Rights Reserved.
+# Copyright (c) 2017 Huawei, Inc.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License"); you may
 #    not use this file except in compliance with the License. You may obtain
@@ -13,17 +12,13 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-"""
-Volume interface (1.1 extension).
-"""
-
+import base64
 try:
     from urllib import urlencode
 except ImportError:
     from urllib.parse import urlencode
-import six
-import base64
 
+import six
 from oslo_utils import encodeutils
 
 from conveyorclient import base
@@ -75,7 +70,7 @@ class PlanManager(base.ManagerWithFind):
         """
         Update resources of a plan.
         :param plan: The :class:`Plan` to update.
-        :param resources: a list of resources to update. 
+        :param resources: a list of resources to update.
         """
         resources = self._process_update_resources(resources)
         body = {"update_plan_resources": {"resources": resources}}
@@ -95,23 +90,28 @@ class PlanManager(base.ManagerWithFind):
                                                  "must be a dict.")
 
             # verify keys
-            if "action" not in attrs.keys() or attrs["action"] not in allowed_actions:
+            if "action" not in attrs.keys() \
+                    or attrs["action"] not in allowed_actions:
                 msg = ("'action' not found or not supported. "
-                        "'action' must be one of %s" % allowed_actions)
+                       "'action' must be one of %s" % allowed_actions)
                 raise base.exceptions.BadRequest(msg)
             # verify actions
-            if attrs["action"] == "add" and ("id" not in attrs.keys() or 
-                                             "resource_type" not in attrs.keys()):
+            if attrs["action"] == "add" \
+                    and ("id" not in attrs.keys()
+                         or "resource_type" not in attrs.keys()):
                 msg = ("'id' and 'resource_type' of new resource "
                        "must be provided when adding a new resource.")
                 raise base.exceptions.BadRequest(msg)
-            elif attrs["action"] == "edit" and (len(attrs.keys()) < 2 
-                                            or "resource_id" not in attrs.keys()):
+            elif attrs["action"] == "edit" \
+                    and (len(attrs.keys()) < 2
+                         or "resource_id" not in attrs.keys()):
                 msg = ("'resource_id' and the fields to be edited "
                        "must be provided when editing resources.")
                 raise base.exceptions.BadRequest(msg)
-            elif attrs["action"] == "delete" and "resource_id" not in attrs.keys():
-                msg = ("'resource_id' must be provided when deleting resources.")
+            elif attrs["action"] == "delete" \
+                    and "resource_id" not in attrs.keys():
+                msg = ("'resource_id' must be provided when deleting "
+                       "resources.")
                 raise base.exceptions.BadRequest(msg)
 
             userdata = attrs.get("user_data")
@@ -172,7 +172,8 @@ class PlanManager(base.ManagerWithFind):
         :param resources: A list of resources. "
                         "Eg: [{'type':'OS::Nova::Server', 'id':'xx'}]
         :param name: plan name.
-        :rtype: :class:`Plan (Actually, only plan_id and resource_dependencies)`
+        :rtype: :class:`Plan (Actually, only plan_id and
+                       resource_dependencies)`
         """
         if not resources or not isinstance(resources, list):
             raise base.exceptions.BadRequest("'resources' must be a list.")
@@ -187,7 +188,8 @@ class PlanManager(base.ManagerWithFind):
         :rtype: :class:`Plan`
         """
         body = {"plan": {"template": template}}
-        resp, body = self.api.client.post("/plans/create_plan_by_template", body=body)
+        resp, body = self.api.client.post("/plans/create_plan_by_template",
+                                          body=body)
         return body['plan']
 
     def download_template(self, plan):

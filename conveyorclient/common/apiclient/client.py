@@ -33,10 +33,10 @@ try:
 except ImportError:
     import json
 
+from oslo_utils import importutils
 import requests
 
 from conveyorclient.common.apiclient import exceptions
-from oslo_utils import importutils
 
 
 _logger = logging.getLogger(__name__)

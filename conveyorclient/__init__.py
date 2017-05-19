@@ -1,4 +1,4 @@
-#    Copyright (c) 2012 OpenStack Foundation
+# Copyright (c) 2017 Huawei, Inc.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License"); you may
 #    not use this file except in compliance with the License. You may obtain
@@ -16,11 +16,9 @@ __all__ = ['__version__']
 
 import pbr.version
 
-#version_info = pbr.version.VersionInfo('python-v2vclient')
 # We have a circular import problem when we first run python setup.py sdist
 # It's harmless, so deflect it.
 try:
-#    __version__ = version_info.version_string()
-    __version__ = 'conveyorclient'
+    __version__ = pbr.version.VersionInfo('conveyorclient').version_string()
 except AttributeError:
     __version__ = None
