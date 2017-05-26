@@ -20,20 +20,22 @@ class ClonesService(base.Resource):
     def __repr__(self):
         return "<plan: %s>" % self.id
 
-    def export_clone_template(self, sys_clone=False):
+    def export_clone_template(self, sys_clone=False, copy_data=True):
         """export clone template for this resource."""
-        self.manager.export_clone_template(self, sys_clone)
+        self.manager.export_clone_template(self, sys_clone, copy_data)
 
-    def clone(self, destination, sys_clone):
+    def clone(self, destination, sys_clone, copy_data=True):
         """clone plan."""
-        self.manager.clone(self, destination, sys_clone=sys_clone)
+        self.manager.clone(self, destination, sys_clone=sys_clone,
+                           copy_data=copy_data)
 
     def export_template_and_clone(self, destination, resources={},
-                                  sys_clone=False):
+                                  sys_clone=False, copy_data=True):
         """clone plan."""
         self.manager.export_template_and_clone(self, destination,
                                                resources=resources,
-                                               sys_clone=sys_clone)
+                                               sys_clone=sys_clone,
+                                               copy_data=copy_data)
 
 
 class ClonesServiceManager(base.ManagerWithFind):
@@ -45,7 +47,7 @@ class ClonesServiceManager(base.ManagerWithFind):
     def list(self):
         pass
 
-    def export_clone_template(self, plan, sys_clone=False):
+    def export_clone_template(self, plan, sys_clone=False, copy_data=True):
         """
         export the template of clone plan
 
@@ -54,15 +56,17 @@ class ClonesServiceManager(base.ManagerWithFind):
         return self._action('export_clone_template',
                             plan,
                             {
-                                'sys_clone': sys_clone
+                                'sys_clone': sys_clone,
+                                'copy_data': copy_data
                             })
 
-    def clone(self, plan, destination, sys_clone=False):
+    def clone(self, plan, destination, sys_clone=False, copy_data=True):
         return self._action('clone',
                             plan,
                             {
                                 'destination': destination,
-                                'sys_clone': sys_clone
+                                'sys_clone': sys_clone,
+                                'copy_data': copy_data
                             })
 
     def _action(self, action, plan, info=None, **kwargs):
@@ -88,11 +92,13 @@ class ClonesServiceManager(base.ManagerWithFind):
 
     def export_template_and_clone(self, plan, destination,
                                   resources={},
-                                  sys_clone=False):
+                                  sys_clone=False,
+                                  copy_data=True):
         return self._action('export_template_and_clone',
                             plan,
                             {
                                 'destination': destination,
                                 'resources': resources,
-                                'sys_clone': sys_clone
+                                'sys_clone': sys_clone,
+                                'copy_data': copy_data
                             })

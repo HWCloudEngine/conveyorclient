@@ -95,9 +95,14 @@ def _extract_metadata(args):
     metavar='<sys_clone>',
     default=False,
     help='Clone the system volume as well or not.')
+@utils.arg(
+    '--copy_data',
+    metavar='<copy_data>',
+    default=False,
+    help='Copy the volume data as well or not.')
 def do_export_clone_template(cs, args):
     """export a clone template. """
-    cs.clones.export_clone_template(args.plan, args.sys_clone)
+    cs.clones.export_clone_template(args.plan, args.sys_clone, args.copy_data)
 
 
 @utils.arg(
@@ -113,9 +118,15 @@ def do_export_clone_template(cs, args):
     metavar='<sys_clone>',
     default=False,
     help='Clone the system volume as well or not.')
+@utils.arg(
+    '--copy_data',
+    metavar='<copy_data>',
+    default=False,
+    help='Copy the volume data as well or not.')
 def do_clone(cs, args):
     """clone resources """
-    cs.clones.clone(args.plan, args.destination, args.sys_clone)
+    cs.clones.clone(args.plan, args.destination, args.sys_clone,
+                    args.copy_data)
 
 
 @utils.arg(
