@@ -207,6 +207,17 @@ class PlanManager(base.ManagerWithFind):
     def force_delete_plan(self, plan):
         self._action('force_delete-plan', plan, {'plan_id': plan})
 
+    def list_plan_resource_availability_zones(self, plan):
+        """
+        Get all the availability_zones this plan contains
+        :param plan: The ID of the plan
+        :return:
+        """
+        resp, body = self._action('list_plan_resource_availability_zones',
+                                  plan,
+                                  {'plan_id': plan})
+        return body['availability_zones']
+
     def _action(self, action, plan, info=None, **kwargs):
         """
         Perform a plan "action" -- download_templdate etc.

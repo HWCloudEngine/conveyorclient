@@ -535,6 +535,15 @@ def do_update_configs(cs, args):
         raise exceptions.CommandError(msg)
 
 
+@utils.arg('plan', metavar="<plan>", help="UUID of plan")
+@utils.service_type(DEFAULT_V2V_SERVICE_TYPE)
+def do_list_plan_resource_availability_zones(cs, args):
+    """list all the availability_zones this plan contains"""
+    utils.isUUID(args.plan, "plan")
+    plan_res_azs = cs.plans.list_plan_resource_availability_zones(args.plan)
+    utils.print_json(plan_res_azs)
+
+
 def _extract_plan_resource_update_args(res_args):
     res = []
 
