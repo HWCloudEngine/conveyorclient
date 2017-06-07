@@ -91,12 +91,12 @@ def _extract_metadata(args):
     metavar='<plan>',
     help=_('Name or ID of plan.'))
 @utils.arg(
-    '--sys_clone',
+    '--sys-clone',
     metavar='<sys_clone>',
     default=False,
     help='Clone the system volume as well or not.')
 @utils.arg(
-    '--copy_data',
+    '--copy-data',
     metavar='<copy_data>',
     default=False,
     help='Copy the volume data as well or not.')
@@ -114,18 +114,27 @@ def do_export_clone_template(cs, args):
     metavar="<destination>",
     help="The destination of clone plan")
 @utils.arg(
-    '--sys_clone',
+    '--sys-clone',
     metavar='<sys_clone>',
     default=False,
     help='Clone the system volume as well or not.')
 @utils.arg(
-    '--copy_data',
+    '--copy-data',
     metavar='<copy_data>',
     default=False,
     help='Copy the volume data as well or not.')
 def do_clone(cs, args):
     """clone resources """
-    cs.clones.clone(args.plan, args.destination, args.sys_clone,
+    destination = args.destination
+    dst_dict = {}
+    for item in destination.split(','):
+        key_value = item.split(':')
+        if len(key_value) != 2:
+            raise exceptions.CommandError(
+                "Invalid format. destination format is "
+                "<src_az>:<dst_az>[,<src_az>:<dst_az>]")
+        dst_dict[key_value[0]] = key_value[1]
+    cs.clones.clone(args.plan, dst_dict, args.sys_clone,
                     args.copy_data)
 
 
@@ -148,7 +157,16 @@ def do_export_migrate_template(cs, args):
     help="The destination of clone plan")
 def do_migrate(cs, args):
     """migrate resources """
-    cs.migrates.migrate(args.plan, args.destination)
+    destination = args.destination
+    dst_dict = {}
+    for item in destination.split(','):
+        key_value = item.split(':')
+        if len(key_value) != 2:
+            raise exceptions.CommandError(
+                "Invalid format. destination format is "
+                "<src_az>:<dst_az>[,<src_az>:<dst_az>]")
+        dst_dict[key_value[0]] = key_value[1]
+    cs.migrates.migrate(args.plan, dst_dict)
 
 
 def do_endpoints(cs, args):
@@ -577,6 +595,15 @@ def do_config_register(cs, args):
     else:
         msg = "Update configuration info properties is empty"
         raise exceptions.CommandError(msg)
+
+
+@utils.arg('plan', metavar="<plan>", help="UUID of plan")
+@utils.service_type(DEFAULT_V2V_SERVICE_TYPE)
+def do_list_plan_resource_availability_zones(cs, args):
+    """list all the availability_zones this plan contains"""
+    utils.isUUID(args.plan, "plan")
+    plan_res_azs = cs.plans.list_plan_resource_availability_zones(args.plan)
+    utils.print_json(plan_res_azs)
 
 
 def _extract_plan_resource_update_args(res_args):

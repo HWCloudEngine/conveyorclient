@@ -235,6 +235,17 @@ class PlanManager(base.ManagerWithFind):
                                           body=body)
         return body['resource']
 
+    def list_plan_resource_availability_zones(self, plan):
+        """
+        Get all the availability_zones this plan contains
+        :param plan: The ID of the plan
+        :return:
+        """
+        resp, body = self._action('list_plan_resource_availability_zones',
+                                  plan,
+                                  {'plan_id': plan})
+        return body['availability_zones']
+
     def _action(self, action, plan, info=None, **kwargs):
         """
         Perform a plan "action" -- download_templdate etc.
