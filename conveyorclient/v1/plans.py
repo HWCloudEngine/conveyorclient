@@ -207,6 +207,24 @@ class PlanManager(base.ManagerWithFind):
     def force_delete_plan(self, plan):
         self._action('force_delete-plan', plan, {'plan_id': plan})
 
+    def get_resource_detail_from_plan(self, res_id, plan_id, is_original=True):
+        """
+        Get the details of specified resource in a plan.
+        :param id: The identifier of the resource to get.
+        :param plan_id: The ID of the plan.
+        :rtype: :class:`Resource`
+        """
+        body = {
+            "get_resource_detail_from_plan": {
+                "plan_id": plan_id,
+                "is_original": is_original
+            }
+        }
+
+        resp, body = self.api.client.post("/plans/%s/action" % res_id,
+                                          body=body)
+        return body['resource']
+
     def _action(self, action, plan, info=None, **kwargs):
         """
         Perform a plan "action" -- download_templdate etc.
