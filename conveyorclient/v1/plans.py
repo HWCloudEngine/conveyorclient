@@ -182,12 +182,13 @@ class PlanManager(base.ManagerWithFind):
                          "plan_name": plan_name}}
         return self._create('/plans', body, 'plan')
 
-    def create_plan_by_template(self, template):
+    def create_plan_by_template(self, template, plan_name=None):
         """
         Create a clone or migrate plan by template.
         :rtype: :class:`Plan`
         """
-        body = {"plan": {"template": template}}
+        body = {"plan": {"template": template,
+                         "plan_name": plan_name}}
         resp, body = self.api.client.post("/plans/create_plan_by_template",
                                           body=body)
         return body['plan']

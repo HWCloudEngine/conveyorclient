@@ -368,7 +368,7 @@ def do_plan_list(cs, args):
                           sort_key=args.sort_key,
                           sort_dir=args.sort_dir)
     key_list = ['plan_id', 'plan_name', 'plan_type', 'plan_status',
-                'task_status', 'created_at', 'expire_at']
+                'task_status', 'created_at']
     if all_tenants:
         key_list.append('project_id')
     utils.print_list(plans, key_list)
@@ -429,11 +429,15 @@ def do_plan_force_delete(cs, args):
          "resource-type-list. <id>: the id of resource. Both type and id "
          "must be provided")
 @utils.arg('--type', metavar="<type>", help="clone or migrate")
+@utils.arg('--name', metavar="<name>", help="plan name")
 @utils.arg('-f', '--template-file', metavar='<FILE>',
            help='Path to the template.')
 @utils.service_type(DEFAULT_V2V_SERVICE_TYPE)
 def do_plan_create(cs, args):
     """Create a plan."""
+    plan_name = None
+    if args.name:
+        plan_name = args.name
     if args.type and args.resources:
         res_types = cs.resources.resource_type_list()
         res_type_list = [t.type for t in res_types]
@@ -444,14 +448,14 @@ def do_plan_create(cs, args):
                        "'clone' or 'migrate'.")
             raise exceptions.CommandError(err_msg)
 
-        plan = cs.plans.create(args.type, resources)
+        plan = cs.plans.create(args.type, resources, plan_name=plan_name)
 
         print("plan_id: %s" % plan.plan_id)
         utils.print_json(plan.original_dependencies)
     elif args.template_file:
         tpl_files, template = template_utils.get_template_contents(
             args.template_file)
-        plan = cs.plans.create_plan_by_template(template)
+        plan = cs.plans.create_plan_by_template(template, plan_name=plan_name)
         plan = cs.plans.get(plan.get('plan_id'))
         _print_plan(plan)
     else:
