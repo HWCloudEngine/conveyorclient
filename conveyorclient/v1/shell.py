@@ -535,6 +535,37 @@ def do_update_configs(cs, args):
         raise exceptions.CommandError(msg)
 
 
+@utils.arg(
+    '-p', '--properties',
+    metavar='<key=value>',
+    action='append',
+    help='Key/value pair describing the configurations of the '
+         'conveyor service.')
+@utils.service_type('conveyorConfig')
+def do_config_register(cs, args):
+
+    fields_list = ['properties']
+    fields = dict((k, v) for (k, v) in vars(args).items()
+                  if k in fields_list and not (v is None))
+
+    fields = utils.args_array_to_dict(fields, 'properties')
+    fields = fields.get('properties', {})
+    input_dict = {}
+
+    try:
+        for k, v in fields.items():
+            input_dict[k] = _translate_string_dict(v)
+    except ValueError:
+        msg = "Input configure key value must be like 'v' or 'k:v' or 'v1,v2'"
+        raise exceptions.CommandError(msg)
+
+    if input_dict:
+        cs.configs.register_configs(**input_dict)
+    else:
+        msg = "Update configuration info properties is empty"
+        raise exceptions.CommandError(msg)
+
+
 def _extract_plan_resource_update_args(res_args):
     res = []
 

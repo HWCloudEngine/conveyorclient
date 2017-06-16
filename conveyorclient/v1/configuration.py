@@ -12,6 +12,8 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import uuid
+
 from conveyorclient import base
 
 
@@ -46,3 +48,11 @@ class ConfigurationServiceManager(base.ManagerWithFind):
         url = '/configurations'
 
         return self.api.client.post(url, body=body)
+
+    def register_configs(self, **configs):
+        body = {
+            'register': configs
+        }
+        res_id = uuid.uuid4()
+        return self.api.client.post("/configurations/%s/action" % res_id,
+                                    body=body)
