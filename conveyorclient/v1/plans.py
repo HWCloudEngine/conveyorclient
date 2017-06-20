@@ -47,13 +47,14 @@ class PlanManager(base.ManagerWithFind):
         """
         return self._get("/plans/%s" % plan, "plan")
 
-    def get_brief(self, plan, body):
+    def get_brief(self, plan):
         """
         Get a plan.
         :param plan: The ID of the plan.
         :rtype: :class:`Plan`
         """
-        return self._action('plan_show-brief', plan, {'plan_id': plan})
+        rsp, body = self._action('plan_show-brief', plan, {'plan_id': plan})
+        return body['plan']
 
     def delete(self, plan):
         """

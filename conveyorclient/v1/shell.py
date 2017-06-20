@@ -670,17 +670,16 @@ def _print_plan(plan):
 
 
 def _print_plan_brief(plan):
-    print("%s:" % plan.plan_id)
-    res = {'plan_id': plan.plan_id,
-           'plan_name': plan.plan_name,
-           'plan_type': plan.plan_type,
-           'plan_status': plan.plan_status,
-           'task_status': plan.task_status,
-           'created_at': plan.created_at,
-           'updated_at': plan.updated_at,
-           'project_id': plan.project_id,
-           'user_id': plan.user_id,
-           'stack_id': plan.stack_id
+    res = {'plan_id': plan.get('plan_id'),
+           'plan_name': plan.get('plan_name'),
+           'plan_type': plan.get('plan_type'),
+           'plan_status': plan.get('plan_status'),
+           'task_status': plan.get('task_status'),
+           'created_at': plan.get('created_at'),
+           'updated_at': plan.get('updated_at'),
+           'project_id': plan.get('project_id'),
+           'user_id': plan.get('user_id'),
+           'stack_id': plan.get('stack_id')
            }
     utils.print_json(res)
 
