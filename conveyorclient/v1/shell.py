@@ -383,6 +383,15 @@ def do_plan_show(cs, args):
     _print_plan(plan)
 
 
+@utils.arg('plan', metavar="<plan>", help="UUID of plan to show")
+@utils.service_type(DEFAULT_V2V_SERVICE_TYPE)
+def do_plan_show_brief(cs, args):
+    """Shows plan brief information."""
+    utils.isUUID(args.plan, "plan")
+    plan = cs.plans.get_brief(args.plan)
+    _print_plan_brief(plan)
+
+
 @utils.arg('plan', metavar="<plan>", nargs='+', help="UUID of plan to delete")
 @utils.service_type(DEFAULT_V2V_SERVICE_TYPE)
 def do_plan_delete(cs, args):
@@ -651,12 +660,27 @@ def _print_plan(plan):
            'task_status': plan.task_status,
            'created_at': plan.created_at,
            'updated_at': plan.updated_at,
-           'expire_time': plan.expire_at,
            'project_id': plan.project_id,
            'user_id': plan.user_id,
            'stack_id': plan.stack_id,
            'original_resources': plan.original_resources,
            'updated_resources': plan.updated_resources,
+           }
+    utils.print_json(res)
+
+
+def _print_plan_brief(plan):
+    print("%s:" % plan.plan_id)
+    res = {'plan_id': plan.plan_id,
+           'plan_name': plan.plan_name,
+           'plan_type': plan.plan_type,
+           'plan_status': plan.plan_status,
+           'task_status': plan.task_status,
+           'created_at': plan.created_at,
+           'updated_at': plan.updated_at,
+           'project_id': plan.project_id,
+           'user_id': plan.user_id,
+           'stack_id': plan.stack_id
            }
     utils.print_json(res)
 
