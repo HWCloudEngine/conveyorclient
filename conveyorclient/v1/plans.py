@@ -54,7 +54,7 @@ class PlanManager(base.ManagerWithFind):
         :rtype: :class:`Plan`
         """
         rsp, body = self._action('plan_show-brief', plan, {'plan_id': plan})
-        return body['plan']
+        return self.resource_class(self, body['plan'], loaded=True)
 
     def delete(self, plan):
         """
