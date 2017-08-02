@@ -60,11 +60,21 @@ class ClonesServiceManager(base.ManagerWithFind):
                                 'copy_data': copy_data
                             })
 
-    def clone(self, plan, destination, sys_clone=False, copy_data=True):
+    def clone(self, plan, destination,
+              clone_resources,
+              update_resources=[],
+              replace_resources=[],
+              clone_links=[],
+              sys_clone=False, copy_data=True):
         return self._action('clone',
                             plan,
                             {
-                                'destination': destination,
+                                'plan_id': plan,
+                                'clone_resources': clone_resources,
+                                'update_resources': update_resources,
+                                'replace_resources': replace_resources,
+                                'clone_links': clone_links,
+                                'availability_zone_map': destination,
                                 'sys_clone': sys_clone,
                                 'copy_data': copy_data
                             })
@@ -76,18 +86,6 @@ class ClonesServiceManager(base.ManagerWithFind):
         body = {action: info}
         self.run_hooks('modify_body_for_action', body, **kwargs)
         url = '/clones/%s/action' % base.getid(plan)
-        return self.api.client.post(url, body=body)
-
-    def start_clone_template(self, plan_id, disable_rollback,
-                             template, **kwargs):
-        body = {
-            "clone_element_template": {
-                "disable_rollback": disable_rollback,
-                "plan_id": plan_id,
-                "template": template
-            }
-        }
-        url = '/clones/%s/action' % plan_id
         return self.api.client.post(url, body=body)
 
     def export_template_and_clone(self, plan, destination,

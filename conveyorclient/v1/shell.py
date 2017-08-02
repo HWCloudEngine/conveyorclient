@@ -108,7 +108,41 @@ def do_export_clone_template(cs, args):
 @utils.arg(
     'plan',
     metavar='<plan>',
-    help=_('Name or ID of plan.'))
+    help=_('ID of plan.'))
+@utils.arg(
+    '--clone_resources',
+    metavar="<type=resource_type,id=resource_id>",
+    action='append',
+    dest='clone_resources',
+    default=[],
+    help="Add clone or migrate object. Specify option multiple times "
+         "to clone or migrate multiple resources. <type>: the type of "
+         "object, you can get the types by the command: conveyor "
+         "resource-type-list. <id>: the id of object. Both type and id "
+         "must be provided")
+@utils.arg(
+    '--clone_links',
+    metavar="<src_id=resource_type,attach_id=resource_id,"
+            "src_type=resource_type, attach_type=resource_type>",
+    action='append',
+    dest='clone_links',
+    default=[],
+    help="")
+@utils.arg(
+    '--update_resources',
+    metavar="<id=resource_id,type=resource_type>",
+    action='append',
+    dest='update_resources',
+    default=[],
+    help="")
+@utils.arg(
+    '--replace_resources',
+    metavar="<src_id=src_resource_id,des_id=des_resource_id,"
+            "resource_type=resource_type>",
+    action='append',
+    dest='replace_resources',
+    default=[],
+    help="")
 @utils.arg(
     'destination',
     metavar="<destination>",
@@ -134,8 +168,15 @@ def do_clone(cs, args):
                 "Invalid format. destination format is "
                 "<src_az>:<dst_az>[,<src_az>:<dst_az>]")
         dst_dict[key_value[0]] = key_value[1]
-    cs.clones.clone(args.plan, dst_dict, args.sys_clone,
-                    args.copy_data)
+    if args.clone_resources:
+        res_types = cs.resources.resource_type_list()
+        res_type_list = [t.type for t in res_types]
+        clone_resources = \
+            _extract_clone_resources_argument(args.clone_resources,
+                                              res_type_list)
+    cs.clones.clone(args.plan, dst_dict, clone_resources,
+                    sys_clone=args.sys_clone,
+                    copy_data=args.copy_data)
 
 
 @utils.arg(
@@ -235,72 +276,35 @@ def do_resource_show(cs, args):
 
 @utils.arg(
     'plan_id',
-    metavar="<plan-id>",
-    help="The uuid of plan")
+    metavar="<plan_id>",
+    help="The id of plan.")
 @utils.arg(
-    'resource_id',
-    metavar="<resource-id>",
-    help="The identifier of resource, eg: server_0, volume_4")
-@utils.arg(
-    '--original',
-    dest='original',
-    metavar='<0|1>',
-    default=True,
-    nargs='?',
-    type=int,
-    const=1,
-    help=_('Get resource details from original resources '
-           'or updated resources.'))
+    'az_map',
+    metavar="<az_map>",
+    help="The map of az.")
 @utils.service_type(DEFAULT_V2V_SERVICE_TYPE)
-def do_plan_resource_show(cs, args):
-    """Get the details of specified resource in a plan."""
-    resource_id = args.resource_id
+def do_show_resource_topo(cs, args):
+    """Get resource details of specified type."""
+    az_str = args.az_map
     plan_id = args.plan_id
-    utils.isUUID(plan_id, "plan")
-    resource = cs.resources.get_resource_detail_from_plan(resource_id, plan_id,
-                                                          args.original)
-
-    attr = resource.get("properties", {})
-    attr["id"] = resource.get("id", "")
-    attr["resource_type"] = resource.get("type", "")
-    attr["resource_name"] = resource.get("name", "")
-    parameters = []
-    for opt, value in resource.get("parameters", {}).items():
-        parameters.append({opt: value.get("default")})
-    attr["parameters"] = parameters
-    utils.print_dict(attr)
+    az_str_list = az_str.split('=')
+    az_map = {}
+    az_map[az_str_list[0]] = az_str_list[1]
+    resource = cs.resources.build_resources_topo(plan_id, az_map)
+    utils.print_json(resource)
 
 
 @utils.arg(
     'plan_id',
-    metavar="<plan-id>",
-    help="The uuid of plan")
-@utils.arg(
-    '--resource',
-    metavar="action=action-type,key1=value1[,key2=value2...]",
-    action='append',
-    dest='resource',
-    default=[],
-    help=_("Specify option multiple times to update multiple resources. "
-           "The keys can be chose from (resource_id, id and the fields of "
-           "specific resource). 'resource_id' is the identifier of resource "
-           "in plan, such as OS::Nova::Server. 'id' is the actual id, it's "
-           "uuid of most resources, or name of special resources, such as "
-           "keypair. action: resource operation type (add, edit or delete). "
-           "If action is add, id and resource_type of new resource must be "
-           "provided. If action is edit, resource_id and the fields to be "
-           "edited must be provided. If action is delete, resource_id must "
-           "be provided. Notice that if you want update some non-independent "
-           "resources, you'd better update all corresponding resources in "
-           "order of the dependencies at the same time. For example, you can "
-           "update port resource by providing (network, subnet, port) "
-           "resources in order."))
+    metavar="<plan_id>",
+    help="The id of plan.")
 @utils.service_type(DEFAULT_V2V_SERVICE_TYPE)
-def do_plan_resource_update(cs, args):
-    """Update resources of specific plan."""
-    utils.isUUID(args.plan_id, "plan")
-    res = _extract_plan_resource_update_args(args.resource)
-    cs.plans.update_plan_resource(args.plan_id, res)
+def do_list_plan_zone(cs, args):
+    """Get resource details of specified type."""
+    plan_id = args.plan_id
+    az = 'availability_zone'
+    resource = cs.resources.list_clone_resources_attribute(plan_id, az)
+    utils.print_json(resource)
 
 
 @utils.arg(
@@ -401,15 +405,6 @@ def do_plan_show(cs, args):
     _print_plan(plan)
 
 
-@utils.arg('plan', metavar="<plan>", help="UUID of plan to show")
-@utils.service_type(DEFAULT_V2V_SERVICE_TYPE)
-def do_plan_show_brief(cs, args):
-    """Shows plan brief information."""
-    utils.isUUID(args.plan, "plan")
-    plan = cs.plans.get_brief(args.plan)
-    _print_plan_brief(plan)
-
-
 @utils.arg('plan', metavar="<plan>", nargs='+', help="UUID of plan to delete")
 @utils.service_type(DEFAULT_V2V_SERVICE_TYPE)
 def do_plan_delete(cs, args):
@@ -446,39 +441,46 @@ def do_plan_force_delete(cs, args):
 
 @utils.arg(
     '--resources',
-    metavar="<type=resource_type,id=resource_id>",
+    metavar="<obj_type=resource_type,obj_id=resource_id>",
     action='append',
     dest='resources',
     default=[],
-    help="Add a resource to clone or migrate. Specify option multiple times "
+    help="Add clone or migrate object. Specify option multiple times "
          "to clone or migrate multiple resources. <type>: the type of "
-         "resource, you can get the types by the command: conveyor "
-         "resource-type-list. <id>: the id of resource. Both type and id "
+         "object, you can get the types by the command: conveyor "
+         "resource-type-list. <id>: the id of object. Both type and id "
          "must be provided")
-@utils.arg('--type', metavar="<type>", help="clone or migrate")
-@utils.arg('--name', metavar="<name>", help="plan name")
+@utils.arg(
+    '--plan-type',
+    dest='plan_type',
+    metavar='<plan_type>',
+    choices=['clone', 'migrate'],
+    help='plan type')
+@utils.arg(
+    '--plan-name',
+    dest='plan_name',
+    metavar='<plan_name>',
+    default=None,
+    help='Create with plan name')
 @utils.arg('-f', '--template-file', metavar='<FILE>',
            help='Path to the template.')
 @utils.service_type(DEFAULT_V2V_SERVICE_TYPE)
 def do_plan_create(cs, args):
     """Create a plan."""
     plan_name = None
-    if args.name:
-        plan_name = args.name
-    if args.type and args.resources:
+    if args.plan_name:
+        plan_name = args.plan_name
+    if args.plan_type and args.resources:
         res_types = cs.resources.resource_type_list()
         res_type_list = [t.type for t in res_types]
         resources = _extract_resource_argument(args.resources, res_type_list)
 
-        if args.type not in ["clone", "migrate"]:
+        if args.plan_type not in ["clone", "migrate"]:
             err_msg = ("Invalid type argument! Type should be "
                        "'clone' or 'migrate'.")
             raise exceptions.CommandError(err_msg)
 
-        plan = cs.plans.create(args.type, resources, plan_name=plan_name)
-
-        print("plan_id: %s" % plan.plan_id)
-        utils.print_json(plan.original_dependencies)
+        plan = cs.plans.create(args.plan_type, resources, plan_name=plan_name)
     elif args.template_file:
         tpl_files, template = template_utils.get_template_contents(
             args.template_file)
@@ -514,22 +516,6 @@ def do_reset_plan_state(cs, args):
     if failure_flag:
         msg = "Unable to reset the state for the specified plan(s)."
         raise exceptions.CommandError(msg)
-
-
-@utils.arg('--plan-id', metavar="<plan-id>", help="The uuid of plan")
-@utils.arg('-f', '--template-file', metavar='<FILE>',
-           help='Path to the template.')
-@utils.arg('-r', '--enable-rollback', default=False, action="store_true",
-           help='Enable rollback on create/update failure.')
-@utils.service_type(DEFAULT_V2V_SERVICE_TYPE)
-def do_template_clone(cs, args):
-    '''Clone resource'''
-    tpl_files, template = template_utils.get_template_contents(
-        args.template_file)
-
-    disable_rollback = not(args.enable_rollback)
-    plan_id = args.plan_id
-    cs.clones.start_clone_template(plan_id, disable_rollback, template)
 
 
 @utils.arg(
@@ -597,15 +583,6 @@ def do_config_register(cs, args):
         raise exceptions.CommandError(msg)
 
 
-@utils.arg('plan', metavar="<plan>", help="UUID of plan")
-@utils.service_type(DEFAULT_V2V_SERVICE_TYPE)
-def do_list_plan_resource_availability_zones(cs, args):
-    """list all the availability_zones this plan contains"""
-    utils.isUUID(args.plan, "plan")
-    plan_res_azs = cs.plans.list_plan_resource_availability_zones(args.plan)
-    utils.print_json(plan_res_azs)
-
-
 def _extract_plan_resource_update_args(res_args):
     res = []
 
@@ -652,6 +629,40 @@ def _extract_resource_argument(arg_res, res_type_list):
                    "Resource arguments must contain both type and id! "
                    "Eg: --resource type=OS::Nova::Server,id=xxxxx.") % res
 
+        res_opts = {'obj_type': '', 'obj_id': ''}
+
+        for param in res.split(","):
+            try:
+                k, v = param.split("=", 1)
+            except ValueError:
+                raise exceptions.CommandError(err_msg)
+            if k in res_opts.keys():
+                res_opts[k] = v
+            else:
+                raise exceptions.CommandError(err_msg)
+
+        if not res_opts['obj_type'] or not res_opts['obj_id']:
+            raise exceptions.CommandError(err_msg)
+
+        if res_opts['obj_type'] not in res_type_list:
+            msg = ("Type unsupported! You can get the types by the "
+                   "command: conveyor resource-type-list")
+            raise exceptions.CommandError(msg)
+
+        utils.isUUID(res_opts['obj_id'], "id")
+
+        resources.append(res_opts)
+    return resources
+
+
+def _extract_clone_resources_argument(arg_res, res_type_list):
+    resources = []
+
+    for res in arg_res:
+        err_msg = ("Invalid resource argument '%s'. "
+                   "Resource arguments must contain both type and id! "
+                   "Eg: --resource type=OS::Nova::Server,id=xxxxx.") % res
+
         res_opts = {'type': '', 'id': ''}
 
         for param in res.split(","):
@@ -690,23 +701,7 @@ def _print_plan(plan):
            'project_id': plan.project_id,
            'user_id': plan.user_id,
            'stack_id': plan.stack_id,
-           'original_resources': plan.original_resources,
-           'updated_resources': plan.updated_resources,
-           }
-    utils.print_json(res)
-
-
-def _print_plan_brief(plan):
-    res = {'plan_id': plan.plan_id,
-           'plan_name': plan.plan_name,
-           'plan_type': plan.plan_type,
-           'plan_status': plan.plan_status,
-           'task_status': plan.task_status,
-           'created_at': plan.created_at,
-           'updated_at': plan.updated_at,
-           'project_id': plan.project_id,
-           'user_id': plan.user_id,
-           'stack_id': plan.stack_id
+           'clone_obj': plan.clone_resources,
            }
     utils.print_json(res)
 

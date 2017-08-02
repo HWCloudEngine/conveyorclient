@@ -11,6 +11,7 @@
 #    WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 #    License for the specific language governing permissions and limitations
 #    under the License.
+import uuid
 
 try:
     from urllib import urlencode
@@ -77,3 +78,27 @@ class ResourceManager(base.ManagerWithFind):
         :rtype: :class:`ResourceType`
         """
         return self._list("/resources/types", "types", obj_class=ResourceType)
+
+    def build_resources_topo(self, plan_id,
+                             az_map, search_opt=None):
+        body = {"build-resources_topo": {"plan_id": plan_id,
+                                         "availability_zone_map": az_map,
+                                         "search_opt": search_opt}}
+        resp, result = self.api.client.post("/resources/%s/action" % plan_id,
+                                            body=body)
+        return result['topo']
+
+    def list_clone_resources_attribute(self, plan_id, attribute_name):
+        body = {"list-clone_resources_attribute":
+                {"plan_id": plan_id,
+                 "attribute_name": attribute_name}}
+        resp, result = self.api.client.post("/resources/%s/action" % plan_id,
+                                            body=body)
+        return result['attribute_list']
+
+    def list_all_availability_zones(self):
+        body = {"list-all_availability_zones": {}}
+        resp, result = \
+            self.api.client.post("/resources/%s/action" % uuid.uuid4(),
+                                 body=body)
+        return result['availability_zone_list']

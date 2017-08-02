@@ -12,14 +12,11 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import base64
 try:
     from urllib import urlencode
 except ImportError:
     from urllib.parse import urlencode
 
-import six
-from oslo_utils import encodeutils
 
 from conveyorclient import base
 from conveyorclient.common import constants
@@ -47,15 +44,6 @@ class PlanManager(base.ManagerWithFind):
         """
         return self._get("/plans/%s" % plan, "plan")
 
-    def get_brief(self, plan):
-        """
-        Get a plan.
-        :param plan: The ID of the plan.
-        :rtype: :class:`Plan`
-        """
-        rsp, body = self._action('plan_show-brief', plan, {'plan_id': plan})
-        return self.resource_class(self, body['plan'], loaded=True)
-
     def delete(self, plan):
         """
         Delete a plan.
@@ -74,65 +62,6 @@ class PlanManager(base.ManagerWithFind):
 
         body = {"plan": values}
         self._update("/plans/%s" % plan, body)
-
-    def update_plan_resource(self, plan, resources):
-        """
-        Update resources of a plan.
-        :param plan: The :class:`Plan` to update.
-        :param resources: a list of resources to update.
-        """
-        resources = self._process_update_resources(resources)
-        body = {"update_plan_resources": {"resources": resources}}
-        return self.api.client.post("/plans/%s/action" % plan, body=body)
-
-    def _process_update_resources(self, resources):
-
-        if not resources or not isinstance(resources, list):
-            raise base.exceptions.BadRequest("'resources' must be a list.")
-
-        allowed_actions = ["add", "edit", "delete"]
-
-        for attrs in resources:
-
-            if not isinstance(attrs, dict):
-                raise base.exceptions.BadRequest("Every item in resources "
-                                                 "must be a dict.")
-
-            # verify keys
-            if "action" not in attrs.keys() \
-                    or attrs["action"] not in allowed_actions:
-                msg = ("'action' not found or not supported. "
-                       "'action' must be one of %s" % allowed_actions)
-                raise base.exceptions.BadRequest(msg)
-            # verify actions
-            if attrs["action"] == "add" \
-                    and ("id" not in attrs.keys()
-                         or "resource_type" not in attrs.keys()):
-                msg = ("'id' and 'resource_type' of new resource "
-                       "must be provided when adding a new resource.")
-                raise base.exceptions.BadRequest(msg)
-            elif attrs["action"] == "edit" \
-                    and (len(attrs.keys()) < 2
-                         or "resource_id" not in attrs.keys()):
-                msg = ("'resource_id' and the fields to be edited "
-                       "must be provided when editing resources.")
-                raise base.exceptions.BadRequest(msg)
-            elif attrs["action"] == "delete" \
-                    and "resource_id" not in attrs.keys():
-                msg = ("'resource_id' must be provided when deleting "
-                       "resources.")
-                raise base.exceptions.BadRequest(msg)
-
-            userdata = attrs.get("user_data")
-            if userdata:
-                if six.PY3:
-                    userdata = userdata.encode("utf-8")
-                else:
-                    userdata = encodeutils.safe_encode(userdata)
-                userdata_b64 = base64.b64encode(userdata).decode('utf-8')
-                attrs["user_data"] = userdata_b64
-
-        return resources
 
     def list(self, search_opts=None, marker=None, limit=None, sort_key=None,
              sort_dir=None):
@@ -174,7 +103,7 @@ class PlanManager(base.ManagerWithFind):
             query_string = ""
         return self._list("/plans/detail%s" % query_string, "plans")
 
-    def create(self, type, resources, plan_name=None):
+    def create(self, plan_type, resources, plan_name=None):
         """
         Create a clone or migrate plan.
         :param type: plan type. 'clone' or 'migrate'
@@ -187,7 +116,7 @@ class PlanManager(base.ManagerWithFind):
         if not resources or not isinstance(resources, list):
             raise base.exceptions.BadRequest("'resources' must be a list.")
 
-        body = {"plan": {"type": type, "resources": resources,
+        body = {"plan": {"plan_type": plan_type, "clone_obj": resources,
                          "plan_name": plan_name}}
         return self._create('/plans', body, 'plan')
 
@@ -216,35 +145,6 @@ class PlanManager(base.ManagerWithFind):
 
     def force_delete_plan(self, plan):
         self._action('force_delete-plan', plan, {'plan_id': plan})
-
-    def get_resource_detail_from_plan(self, res_id, plan_id, is_original=True):
-        """
-        Get the details of specified resource in a plan.
-        :param id: The identifier of the resource to get.
-        :param plan_id: The ID of the plan.
-        :rtype: :class:`Resource`
-        """
-        body = {
-            "get_resource_detail_from_plan": {
-                "plan_id": plan_id,
-                "is_original": is_original
-            }
-        }
-
-        resp, body = self.api.client.post("/plans/%s/action" % res_id,
-                                          body=body)
-        return body['resource']
-
-    def list_plan_resource_availability_zones(self, plan):
-        """
-        Get all the availability_zones this plan contains
-        :param plan: The ID of the plan
-        :return:
-        """
-        resp, body = self._action('list_plan_resource_availability_zones',
-                                  plan,
-                                  {'plan_id': plan})
-        return body['resource_availability_zones']
 
     def _action(self, action, plan, info=None, **kwargs):
         """
