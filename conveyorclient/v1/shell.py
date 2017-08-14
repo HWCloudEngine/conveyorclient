@@ -299,6 +299,17 @@ def do_show_resource_topo(cs, args):
     metavar="<plan_id>",
     help="The id of plan.")
 @utils.service_type(DEFAULT_V2V_SERVICE_TYPE)
+def do_delete_cloned_resources(cs, args):
+    """Get resource details of specified type."""
+    plan_id = args.plan_id
+    cs.resources.delete_cloned_resources(plan_id)
+
+
+@utils.arg(
+    'plan_id',
+    metavar="<plan_id>",
+    help="The id of plan.")
+@utils.service_type(DEFAULT_V2V_SERVICE_TYPE)
 def do_list_plan_zone(cs, args):
     """Get resource details of specified type."""
     plan_id = args.plan_id

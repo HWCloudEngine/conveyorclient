@@ -102,3 +102,8 @@ class ResourceManager(base.ManagerWithFind):
             self.api.client.post("/resources/%s/action" % uuid.uuid4(),
                                  body=body)
         return result['availability_zone_list']
+
+    def delete_cloned_resources(self, plan_id):
+        body = {"delete-cloned_resource": {'plan_id': plan_id}}
+        self.api.client.post("/resources/%s/action" % plan_id,
+                             body=body)
